@@ -7,10 +7,9 @@
 // Link with ws2_32.lib
 #pragma comment(lib, "Ws2_32.lib")
 
-int main()
+int main(int argc, char *argv[])
 {
 	WSADATA wsaData;
-
 	SOCKET RecvSocket;
 	sockaddr_in RecvAddr;
 
@@ -38,8 +37,12 @@ int main()
 	}
 	//-----------------------------------------------
 	// Bind the socket to any address and the specified port.
-	printf("Enter the port number:");
-	std::cin >> Port;
+	if (argc == 1)
+	{
+		printf("Enter the port number:");
+		std::cin >> Port;
+	}
+	Port = (unsigned short)argv[2];
 	RecvAddr.sin_family = AF_INET;
 	RecvAddr.sin_port = htons(Port);
 	RecvAddr.sin_addr.s_addr = htonl(INADDR_ANY);
