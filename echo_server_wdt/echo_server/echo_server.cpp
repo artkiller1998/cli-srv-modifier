@@ -42,7 +42,7 @@ int main(int argc, char *argv[])
 		printf("Enter the port number:");
 		std::cin >> Port;
 	}
-	Port = (unsigned short)argv[2];
+	Port = (unsigned short)argv[1];
 	RecvAddr.sin_family = AF_INET;
 	RecvAddr.sin_port = htons(Port);
 	RecvAddr.sin_addr.s_addr = htonl(INADDR_ANY);
