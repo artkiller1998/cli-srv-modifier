@@ -1,16 +1,20 @@
-﻿Build started 30.01.2019 18:27:29.
-     1>Project "c:\Users\denis rodrigez\documents\visual studio 2013\Projects\echo_client_wdt\echo_client_wdt\echo_client_wdt.vcxproj" on node 2 (Build target(s)).
+﻿Build started 31.01.2019 23:37:22.
+     1>Project "C:\Users\Denis Rodrigez\Documents\Visual Studio 2013\Projects\echo_client_wdt\echo_client_wdt\echo_client_wdt.vcxproj" on node 2 (Build target(s)).
      1>ClCompile:
          C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\CL.exe /c /I"C:\Program Files (x86)\Microsoft Visual Studio 11.0\VC\include" /ZI /nologo /W3 /WX- /Od /Oy- /D WIN32 /D _DEBUG /D _CONSOLE /D _LIB /D _USING_V110_SDK71_ /D _UNICODE /D UNICODE /Gm /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Yu"stdafx.h" /Fp"Debug\echo_client_wdt.pch" /Fo"Debug\\" /Fd"Debug\vc120.pdb" /Gd /TP /analyze- /errorReport:prompt echo_client_wdt.cpp
          echo_client_wdt.cpp
-     1>c:\users\denis rodrigez\documents\visual studio 2013\projects\echo_client_wdt\echo_client_wdt\echo_client_wdt.cpp(42): warning C4996: 'strcpy': This function or variable may be unsafe. Consider using strcpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+     1>c:\users\denis rodrigez\documents\visual studio 2013\projects\echo_client_wdt\echo_client_wdt\echo_client_wdt.cpp(39): warning C4996: 'gets': This function or variable may be unsafe. Consider using gets_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+                 c:\program files (x86)\microsoft visual studio 11.0\vc\include\stdio.h(261) : see declaration of 'gets'
+     1>c:\users\denis rodrigez\documents\visual studio 2013\projects\echo_client_wdt\echo_client_wdt\echo_client_wdt.cpp(47): warning C4996: 'strcpy': This function or variable may be unsafe. Consider using strcpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
                  c:\program files (x86)\microsoft visual studio 11.0\vc\include\string.h(110) : see declaration of 'strcpy'
+     1>c:\users\denis rodrigez\documents\visual studio 2013\projects\echo_client_wdt\echo_client_wdt\echo_client_wdt.cpp(95): warning C4996: 'gets': This function or variable may be unsafe. Consider using gets_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+                 c:\program files (x86)\microsoft visual studio 11.0\vc\include\stdio.h(261) : see declaration of 'gets'
        Link:
-         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\link.exe /ERRORREPORT:PROMPT /OUT:"c:\users\denis rodrigez\documents\visual studio 2013\Projects\echo_client_wdt\Debug\echo_client_wdt.exe" /INCREMENTAL /NOLOGO /LIBPATH:"C:\Program Files (x86)\Microsoft Visual Studio 11.0\VC\lib" /LIBPATH:"C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\lib" kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:"c:\users\denis rodrigez\documents\visual studio 2013\Projects\echo_client_wdt\Debug\echo_client_wdt.pdb" /SUBSYSTEM:CONSOLE,"5.01" /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"c:\users\denis rodrigez\documents\visual studio 2013\Projects\echo_client_wdt\Debug\echo_client_wdt.lib" /MACHINE:X86 Debug\echo_client_wdt.obj
+         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\link.exe /ERRORREPORT:PROMPT /OUT:"C:\Users\Denis Rodrigez\Documents\Visual Studio 2013\Projects\echo_client_wdt\Debug\echo_client_wdt.exe" /INCREMENTAL /NOLOGO /LIBPATH:"C:\Program Files (x86)\Microsoft Visual Studio 11.0\VC\lib" /LIBPATH:"C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\lib" kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:"C:\Users\Denis Rodrigez\Documents\Visual Studio 2013\Projects\echo_client_wdt\Debug\echo_client_wdt.pdb" /SUBSYSTEM:CONSOLE,"5.01" /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"C:\Users\Denis Rodrigez\Documents\Visual Studio 2013\Projects\echo_client_wdt\Debug\echo_client_wdt.lib" /MACHINE:X86 Debug\echo_client_wdt.obj
          Debug\stdafx.obj
-         echo_client_wdt.vcxproj -> c:\users\denis rodrigez\documents\visual studio 2013\Projects\echo_client_wdt\Debug\echo_client_wdt.exe
-     1>Done Building Project "c:\Users\denis rodrigez\documents\visual studio 2013\Projects\echo_client_wdt\echo_client_wdt\echo_client_wdt.vcxproj" (Build target(s)).
+         echo_client_wdt.vcxproj -> C:\Users\Denis Rodrigez\Documents\Visual Studio 2013\Projects\echo_client_wdt\Debug\echo_client_wdt.exe
+     1>Done Building Project "C:\Users\Denis Rodrigez\Documents\Visual Studio 2013\Projects\echo_client_wdt\echo_client_wdt\echo_client_wdt.vcxproj" (Build target(s)).
 
 Build succeeded.
 
-Time Elapsed 00:00:01.36
+Time Elapsed 00:00:00.79

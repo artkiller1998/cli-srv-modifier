@@ -27,11 +27,16 @@ int main(int argc, char *argv[])
 	unsigned short RecvPort = 0;
 	unsigned short SendPort = 0;
 
+	char RecvBuf[1024];
+	int SenderAddrSize = sizeof (RecvAddr);
+	char SendBuf[1024];
+	int BufLen = 1024;
+
 	if (argc < 4)
 	{
 		printf("Enter the receiver ip address:");
-		fflush(stdin);
-		fgets(RecvIP, 30, stdin);
+		//fflush(stdin);
+		gets(RecvIP);
 		printf("Enter the  receiver port number:");
 		std::cin >> RecvPort;
 		printf("Enter the sender port number:");
@@ -44,9 +49,6 @@ int main(int argc, char *argv[])
 		SendPort = atoi(argv[3]);
 	}
 	
-	char SendBuf[1024];
-	int BufLen = 1024;
-
 	//----------------------
 	// Initialize Winsock
 	iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
@@ -84,41 +86,43 @@ int main(int argc, char *argv[])
 	RecvAddr.sin_port = htons(RecvPort);
 	RecvAddr.sin_addr.s_addr = inet_addr(RecvIP);
 
-	//---------------------------------------------
-	// Send a datagram to the receiver
-	wprintf(L"Enter text of the message:\n");
-	fflush(stdin);
-	fgets(SendBuf, BufLen, stdin);
-	wprintf(L"Sending a datagram to the receiver...\n");
-	iResult = sendto(SendSocket,
-		SendBuf, BufLen, 0, (SOCKADDR *)& RecvAddr, sizeof (RecvAddr));
-	if (iResult == SOCKET_ERROR) {
-		wprintf(L"sendto failed with error: %d\n", WSAGetLastError());
-		closesocket(SendSocket);
-		WSACleanup();
-		return 1;
-	}
-	//---------------------------------------------
-
-	//---------------------------------------------
-	// Checking a check-datagram from the receiver
-	char RecvBuf[1024];
-	int SenderAddrSize = sizeof (RecvAddr);
-
-	iResult = recvfrom(SendSocket,
-		RecvBuf, BufLen, 0, (SOCKADDR *)& RecvAddr, &SenderAddrSize);
-	if (iResult == SOCKET_ERROR) {
-		wprintf(L"recvfrom failed with error %d\n", WSAGetLastError());
-	}
-	if (strcmp(RecvBuf, SendBuf)) {
-		wprintf(L"Checking the sending status.........OK\n");
-	}
-	else
+	while (true)
 	{
-		printf("%s is not %s\n", RecvBuf, SendBuf);
-		wprintf(L"Checking the sending status.........ERROR\n");
+		//---------------------------------------------
+		// Send a datagram to the receiver
+		wprintf(L"Enter text of the message:\n");
+		//fflush(stdin);
+		gets(SendBuf);
+		wprintf(L"Sending a datagram to the receiver...\n");
+		iResult = sendto(SendSocket,
+			SendBuf, BufLen, 0, (SOCKADDR *)& RecvAddr, sizeof (RecvAddr));
+		if (iResult == SOCKET_ERROR) {
+			wprintf(L"sendto failed with error: %d\n", WSAGetLastError());
+			closesocket(SendSocket);
+			WSACleanup();
+			return 1;
+		}
+		//---------------------------------------------
+
+		//---------------------------------------------
+		// Checking a check-datagram from the receiver
+
+
+		iResult = recvfrom(SendSocket,
+			RecvBuf, BufLen, 0, (SOCKADDR *)& RecvAddr, &SenderAddrSize);
+		if (iResult == SOCKET_ERROR) {
+			wprintf(L"recvfrom failed with error %d\n", WSAGetLastError());
+		}
+		if (strcmp(RecvBuf, SendBuf) == 0) {
+			wprintf(L"Checking the sending status.........OK\n\n");
+		}
+		else
+		{
+			printf("%s is not %s\n", RecvBuf, SendBuf);
+			wprintf(L"Checking the sending status.........ERROR\n\n");
+		}
+		//---------------------------------------------
 	}
-	//---------------------------------------------
 
 	// When the application is finished sending, close the socket.
 	wprintf(L"Finished sending. Closing socket.\n");
