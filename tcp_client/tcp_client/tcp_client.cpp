@@ -27,7 +27,7 @@ int __cdecl main(int argc, char **argv)
 		*ptr = NULL,
 		hints;
 	const int BufferSize = 512;
-	char sendbuf[BufferSize] = "this is a test";
+	char sendbuf[BufferSize] = "Hi there!";
 	char recvbuf[BufferSize];
 	int iResult;
 	int recvbuflen = BufferSize;
@@ -130,18 +130,50 @@ int __cdecl main(int argc, char **argv)
 		return 1;
 	}
 
-	// Send an initial buffer
-	iResult = send(ConnectSocket, sendbuf, (int)strlen(sendbuf), 0);
-	if (iResult == SOCKET_ERROR) {
-		printf("send failed with error: %d\n", WSAGetLastError());
-		closesocket(ConnectSocket);
-		WSACleanup();
-		return 1;
-	}
+	//// Send an initial buffer
+	//iResult = send(ConnectSocket, sendbuf, (int)strlen(sendbuf), 0);
+	//if (iResult == SOCKET_ERROR) {
+	//	printf("send failed with error: %d\n", WSAGetLastError());
+	//	closesocket(ConnectSocket);
+	//	WSACleanup();
+	//	return 1;
+	//}
 
-	printf("Bytes Sent: %ld\n", iResult);
-
+	/*printf("Bytes Sent: %ld\n", iResult);
+*/
 	// shutdown the connection since no more data will be sent
+	//iResult = shutdown(ConnectSocket, SD_SEND);
+	//if (iResult == SOCKET_ERROR) {
+	//	printf("shutdown failed with error: %d\n", WSAGetLastError());
+	//	closesocket(ConnectSocket);
+	//	WSACleanup();
+	//	return 1;
+	//}
+
+	// Receive until the peer closes the connection
+	do {
+		// Send message
+		iResult = send(ConnectSocket, sendbuf, (int)strlen(sendbuf), 0);
+		if (iResult == SOCKET_ERROR) {
+			printf("send failed with error: %d\n", WSAGetLastError());
+			closesocket(ConnectSocket);
+			WSACleanup();
+			return 1;
+		}
+		printf("ToServer:%s\n", sendbuf);
+
+		iResult = recv(ConnectSocket, recvbuf, recvbuflen, 0);
+		if (iResult > 0)
+			printf("FromServer:%s\n", recvbuf);
+		else if (iResult == 0)
+			printf("Connection closed\n");
+		else
+			printf("recv failed with error: %d\n", WSAGetLastError());
+
+		fflush(stdin);
+		gets(sendbuf);
+	} while (iResult > 0);
+
 	iResult = shutdown(ConnectSocket, SD_SEND);
 	if (iResult == SOCKET_ERROR) {
 		printf("shutdown failed with error: %d\n", WSAGetLastError());
@@ -149,19 +181,6 @@ int __cdecl main(int argc, char **argv)
 		WSACleanup();
 		return 1;
 	}
-
-	// Receive until the peer closes the connection
-	do {
-
-		iResult = recv(ConnectSocket, recvbuf, recvbuflen, 0);
-		if (iResult > 0)
-			printf("Bytes received: %d\n", iResult);
-		else if (iResult == 0)
-			printf("Connection closed\n");
-		else
-			printf("recv failed with error: %d\n", WSAGetLastError());
-
-	} while (iResult > 0);
 
 	// cleanup
 	closesocket(ConnectSocket);
