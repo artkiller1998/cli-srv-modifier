@@ -29,7 +29,7 @@ int main(int argc, char *argv[])
 	char Port[50] = "";
 	int iSendResult;
 	const int BufferSize = 512;
-	char recvbuf[BufferSize];
+	char recvbuf[BufferSize] = "";
 	int recvbuflen = BufferSize;
 
 	sockaddr_in SenderAddr;
@@ -115,6 +115,7 @@ int main(int argc, char *argv[])
 
 	// Receive until the peer shuts down the connection
 	do {
+		std::fill_n(recvbuf, 512, 0);
 		iResult = recv(ClientSocket, recvbuf, recvbuflen, 0);
 		if (iResult > 0) {
 			//printf("Bytes received: %d\n", iResult);
@@ -139,7 +140,6 @@ int main(int argc, char *argv[])
 			WSACleanup();
 			return 1;
 		}
-
 	} while (iResult > 0);
 
 	// shutdown the connection since we're done

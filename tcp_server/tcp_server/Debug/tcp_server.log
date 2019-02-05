@@ -1,4 +1,4 @@
-﻿Build started 01.02.2019 23:10:08.
+﻿Build started 05.02.2019 13:19:58.
      1>Project "C:\Users\Denis Rodrigez\Documents\Visual Studio 2013\Projects\tcp_server\tcp_server\tcp_server.vcxproj" on node 2 (Build target(s)).
      1>ClCompile:
          C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\CL.exe /c /I"C:\Program Files (x86)\Microsoft Visual Studio 11.0\VC\include" /ZI /nologo /W3 /WX- /Od /Oy- /D WIN32 /D _DEBUG /D _CONSOLE /D _LIB /D _ALLOW_MSC_VER_MISMATCH /D _USING_V110_SDK71_ /D _UNICODE /D UNICODE /Gm /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Yu"stdafx.h" /Fp"Debug\tcp_server.pch" /Fo"Debug\\" /Fd"Debug\vc120.pdb" /Gd /TP /analyze- /errorReport:prompt tcp_server.cpp
@@ -15,4 +15,4 @@
 
 Build succeeded.
 
-Time Elapsed 00:00:00.66
+Time Elapsed 00:00:00.59

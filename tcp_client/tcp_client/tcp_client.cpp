@@ -28,7 +28,7 @@ int __cdecl main(int argc, char **argv)
 		hints;
 	const int BufferSize = 512;
 	char sendbuf[BufferSize] = "Hi there!";
-	char recvbuf[BufferSize];
+	char recvbuf[BufferSize] = "";
 	int iResult;
 	int recvbuflen = BufferSize;
 	sockaddr_in RecvAddr;
@@ -162,6 +162,8 @@ int __cdecl main(int argc, char **argv)
 		}
 		printf("ToServer:%s\n", sendbuf);
 
+		std::fill_n(recvbuf, 512, 0);
+
 		iResult = recv(ConnectSocket, recvbuf, recvbuflen, 0);
 		if (iResult > 0)
 			printf("FromServer:%s\n", recvbuf);
@@ -169,9 +171,9 @@ int __cdecl main(int argc, char **argv)
 			printf("Connection closed\n");
 		else
 			printf("recv failed with error: %d\n", WSAGetLastError());
-
 		fflush(stdin);
 		gets(sendbuf);
+	/*	memset(recvbuf, 0, sizeof(int)*512);*/
 	} while (iResult > 0);
 
 	iResult = shutdown(ConnectSocket, SD_SEND);
