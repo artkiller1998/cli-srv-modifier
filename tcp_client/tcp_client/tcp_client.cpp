@@ -27,33 +27,33 @@ int __cdecl main(int argc, char **argv)
 		*ptr = NULL,
 		hints;
 	const int BufferSize = 512;
-	char *sendbuf = "this is a test";
+	char sendbuf[BufferSize] = "this is a test";
 	char recvbuf[BufferSize];
 	int iResult;
 	int recvbuflen = BufferSize;
 	sockaddr_in RecvAddr;
 
 	char RecvIP[50] = "";
-	int SendPort = 0;
 	char RecvPort[20] = "";
+	int SendPort = 0;
 
 	if (argc == 4) {
 		strcpy(RecvIP, argv[1]);
 		strcpy(RecvPort, argv[2]);
 		SendPort = atoi(argv[3]);
-		
 	}
 	else {
-		std::fstream file("udp_client.cfg");
+		std::fstream file("tcp_client.cfg");
 		if (file.is_open() && file.peek() != EOF) {
-			printf("udp_client.cfg --- is opened\n\n"); // если открылся
+			printf("tcp_client.cfg --- is opened\n\n"); // если открылся
 			file >> RecvIP;
 			file >> RecvPort;
 			file >> SendPort;
 		}
 		else {
-			printf("udp_client.cfg --- is empty or can`t be opened!\n"); // если первый символ конец файла
+			printf("tcp_client.cfg --- is empty or can`t be opened!\n"); // если первый символ конец файла
 			printf("Enter the receiver ip address:");
+			fflush(stdin);
 			gets(RecvIP);
 			printf("Enter the  receiver port number:");
 			fflush(stdin);
