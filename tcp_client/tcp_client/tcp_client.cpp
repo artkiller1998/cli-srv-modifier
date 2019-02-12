@@ -130,51 +130,30 @@ int __cdecl main(int argc, char **argv)
 		return 1;
 	}
 
-	//// Send an initial buffer
-	//iResult = send(ConnectSocket, sendbuf, (int)strlen(sendbuf), 0);
-	//if (iResult == SOCKET_ERROR) {
-	//	printf("send failed with error: %d\n", WSAGetLastError());
-	//	closesocket(ConnectSocket);
-	//	WSACleanup();
-	//	return 1;
-	//}
-
-	/*printf("Bytes Sent: %ld\n", iResult);
-*/
-	// shutdown the connection since no more data will be sent
-	//iResult = shutdown(ConnectSocket, SD_SEND);
-	//if (iResult == SOCKET_ERROR) {
-	//	printf("shutdown failed with error: %d\n", WSAGetLastError());
-	//	closesocket(ConnectSocket);
-	//	WSACleanup();
-	//	return 1;
-	//}
-
 	// Receive until the peer closes the connection
+	BOOL l = TRUE;
+	if (SOCKET_ERROR == ioctlsocket(ConnectSocket, FIONBIO, (unsigned long*)&l))
+	{
+		// Error
+		int res = WSAGetLastError();
+		return -1;
+	}
+
 	do {
 		// Send message
 		iResult = send(ConnectSocket, sendbuf, (int)strlen(sendbuf), 0);
-		if (iResult == SOCKET_ERROR) {
-			printf("send failed with error: %d\n", WSAGetLastError());
-			closesocket(ConnectSocket);
-			WSACleanup();
-			return 1;
-		}
 		printf("ToServer:%s\n", sendbuf);
 
 		std::fill_n(recvbuf, 512, 0);
-
 		iResult = recv(ConnectSocket, recvbuf, recvbuflen, 0);
 		if (iResult > 0)
 			printf("FromServer:%s\n", recvbuf);
 		else if (iResult == 0)
 			printf("Connection closed\n");
-		else
-			printf("recv failed with error: %d\n", WSAGetLastError());
+
 		fflush(stdin);
 		gets(sendbuf);
-	/*	memset(recvbuf, 0, sizeof(int)*512);*/
-	} while (iResult > 0);
+	} while (strcmp(sendbuf, "q") != 0);
 
 	iResult = shutdown(ConnectSocket, SD_SEND);
 	if (iResult == SOCKET_ERROR) {

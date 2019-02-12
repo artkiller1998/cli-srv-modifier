@@ -1,50 +1,55 @@
 #include "stdafx.h"
-#undef UNICODE
+#undef UNICODE //use ANSI
 
 #define WIN32_LEAN_AND_MEAN
+#define MAX_CLIENTS 10
 
-#include <windows.h>
+#include <windows.h> //Win32 API
 #include <winsock2.h>
-#include <ws2tcpip.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include "fstream"
-#include "iostream"
+#include <ws2tcpip.h> // getaddrinfo
+#include <stdlib.h> // EXIT FAILURE
+#include <stdio.h> // gets, perror
+#include "fstream" // read file
+//#include "iostream" // input output
 
-// Need to link with Ws2_32.lib
-#pragma comment (lib, "Ws2_32.lib")
-// #pragma comment (lib, "Mswsock.lib")
+#pragma comment (lib, "Ws2_32.lib") // Need to link with Ws2_32.lib
+
+typedef struct { //contains info about peers
+	int socket;
+	struct sockaddr_in addres;
+} peer_t;
 
 int main(int argc, char *argv[])
 {
-	WSADATA wsaData;
-	int iResult;
+	WSADATA wsaData; //contains information about WS
+	int iResult; //result WS operations
 
 	SOCKET ListenSocket = INVALID_SOCKET;
-	SOCKET ClientSocket = INVALID_SOCKET;
+	//SOCKET ClientSocket = INVALID_SOCKET;
 
-	struct addrinfo *result = NULL; //
-	struct addrinfo hints;			//на замену
+	struct addrinfo *result = NULL; //contains response(ответ) information about the host
+	struct addrinfo hints;			//hints about the type of socket the caller 
 
-	char Port[50] = "";
-	int iSendResult;
+	char Port[50] = ""; //receiver port number
+	//int iSendResult;
 	const int BufferSize = 512;
-	char recvbuf[BufferSize] = "";
+	char recvbuf[BufferSize] = ""; //recv
 	int recvbuflen = BufferSize;
+	//char buffer[1025];  //data buffer of 1K  
 
-	sockaddr_in SenderAddr;
+	sockaddr_in SenderAddr; //who connected
 	int SenderAddrSize = sizeof (SenderAddr);
 
-	if (argc == 2) {
+	if (argc == 2) { //reads port from args cmd
 		strcpy(Port, argv[1]);
 	}
 	else {
-		std::fstream file("tcp_server.cfg");
+		std::fstream file("tcp_server.cfg"); //reads port from file
 		if (file.is_open() && file.peek() != EOF) {
 			printf("tcp_server.cfg --- is opened\n\n"); // если открылся
 			file >> Port;
 		}
-		else {
+		else { //reads port from user keyboard
 			printf("Enter the  receiver port number:");
 			gets(Port);
 		}
@@ -52,20 +57,20 @@ int main(int argc, char *argv[])
 	}
 
 	// Initialize Winsock
-	iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
+	iResult = WSAStartup(MAKEWORD(2, 2), &wsaData); //use WS2
 	if (iResult != 0) {
 		printf("WSAStartup failed with error: %d\n", iResult);
 		return 1;
 	}
 
-	ZeroMemory(&hints, sizeof(hints)); // тоже заменить
-	hints.ai_family = AF_INET;
-	hints.ai_socktype = SOCK_STREAM;
-	hints.ai_protocol = IPPROTO_TCP;
-	hints.ai_flags = AI_PASSIVE;
+	ZeroMemory(&hints, sizeof(hints)); // fill zero hints
+	hints.ai_family = AF_INET; //IPv4
+	hints.ai_socktype = SOCK_STREAM; // TCP stream-sockets
+	hints.ai_protocol = IPPROTO_TCP; 
+	hints.ai_flags = AI_PASSIVE; // заполните мой IP-адрес за меня
 
-	// Resolve the server address and port
-	iResult = getaddrinfo(NULL,(PCSTR)Port, &hints, &result);
+	// Resolve(set) the server address and port
+	iResult = getaddrinfo(NULL, (PCSTR)Port, &hints, &result);
 	if (iResult != 0) {
 		printf("getaddrinfo failed with error: %d\n", iResult);
 		WSACleanup();
@@ -81,7 +86,7 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 
-	// Setup the TCP listening socket
+	// Setup the TCP listening socket, set port
 	iResult = bind(ListenSocket, result->ai_addr, (int)result->ai_addrlen);
 	if (iResult == SOCKET_ERROR) {
 		printf("bind failed with error: %d\n", WSAGetLastError());
@@ -91,9 +96,9 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 
-	freeaddrinfo(result);
+	freeaddrinfo(result); //finish settings, clear result
 
-	iResult = listen(ListenSocket, SOMAXCONN);
+	iResult = listen(ListenSocket, SOMAXCONN);//максимальное количество соединений в очереди 128
 	if (iResult == SOCKET_ERROR) {
 		printf("listen failed with error: %d\n", WSAGetLastError());
 		closesocket(ListenSocket);
@@ -101,59 +106,134 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 
-	// Accept a client socket
-	ClientSocket = accept(ListenSocket, (SOCKADDR *)&SenderAddr, &SenderAddrSize);
-	if (ClientSocket == INVALID_SOCKET) {
-		printf("accept failed with error: %d\n", WSAGetLastError());
-		closesocket(ListenSocket);
-		WSACleanup();
-		return 1;
+	printf("Waiting for incoming connections.\n");
+
+	//int res;
+	fd_set read_s; // Множество фд готовых к чтению
+	fd_set write_s; // Множество... записи
+	fd_set error_s; // Множество... исключит ситуац
+	timeval time_out; // Таймаут
+
+	//int opt = TRUE;
+	int new_socket, client_socket[30],
+		activity, i, valread, sd;
+	int max_sd;
+
+	//initialise all client_socket[] to 0 so not checked  
+	for (i = 0; i < MAX_CLIENTS; i++)
+	{
+		client_socket[i] = 0;
 	}
 
-	// No longer need server socket
-	closesocket(ListenSocket);
+	while (TRUE)
+	{
+		//clear the socket set  
+		FD_ZERO(&read_s);
 
-	// Receive until the peer shuts down the connection
-	do {
-		std::fill_n(recvbuf, 512, 0);
-		iResult = recv(ClientSocket, recvbuf, recvbuflen, 0);
-		if (iResult > 0) {
-			//printf("Bytes received: %d\n", iResult);
-			printf("FromClient: %s:%d\n", inet_ntoa(SenderAddr.sin_addr), ntohs(SenderAddr.sin_port));
-			printf("Message:%s\n", recvbuf);
+		//add main socket to set  
+		FD_SET(ListenSocket, &read_s);
+		max_sd = ListenSocket;
 
-			// Echo the buffer back to the sender
-			iSendResult = send(ClientSocket, recvbuf, iResult, 0);
-			if (iSendResult == SOCKET_ERROR) {
-				printf("send failed with error: %d\n", WSAGetLastError());
-				closesocket(ClientSocket);
-				WSACleanup();
-				return 1;
+		//add child sockets to set  
+		for (i = 0; i < MAX_CLIENTS; i++)
+		{
+			//socket descriptor  
+			sd = client_socket[i];
+
+			//if valid socket descriptor then add to read list  
+			if (sd > 0)
+				FD_SET(sd, &read_s);
+
+			//highest file descriptor number, need it for the select function  
+			if (sd > max_sd)
+				max_sd = sd;
+		}
+
+		//wait for an activity on one of the sockets , timeout is NULL ,  
+		//so wait indefinitely  неопределенное время
+		activity = select(max_sd + 1, &read_s, NULL, NULL, NULL);
+
+		if ((activity < 0) && (errno != EINTR)) // если сигнал прерывания произошел во время системного вызова - он игнорируется
+		{
+			printf("select error");
+		}
+
+		//If something happened on the main socket ,  
+		//then its an incoming connection  
+		if (FD_ISSET(ListenSocket, &read_s)) // сокет находится в мн-ве фд треб чтения
+		{
+			if ((new_socket = accept(ListenSocket, //принимаем соедиенеие
+				(struct sockaddr *)&SenderAddr, (socklen_t*)&SenderAddrSize))<0)
+			{
+				perror("accept");
+				exit(EXIT_FAILURE);
 			}
-			//printf("Bytes sent: %d\n", iSendResult);
-		}
-		else if (iResult == 0)
-			printf("Connection closing...\n");
-		else  {
-			printf("recv failed with error: %d\n", WSAGetLastError());
-			closesocket(ClientSocket);
-			WSACleanup();
-			return 1;
-		}
-	} while (iResult > 0);
 
-	// shutdown the connection since we're done
-	iResult = shutdown(ClientSocket, SD_SEND);
-	if (iResult == SOCKET_ERROR) {
-		printf("shutdown failed with error: %d\n", WSAGetLastError());
-		closesocket(ClientSocket);
-		WSACleanup();
-		return 1;
+			//add new socket to array of sockets  
+			for (i = 0; i < MAX_CLIENTS; i++)
+			{
+				//if position is empty  перебираем пока не найдем пустую ячейку
+				if (client_socket[i] == 0)
+				{
+					client_socket[i] = new_socket; 
+					printf("Count of connected clients: %d\n", i+1); //добавлен в список подключенных устройств
+
+					break;
+				}
+			}
+		}
+
+		//else its some IO operation on some other socket 
+		for (i = 0; i < MAX_CLIENTS; i++)
+		{
+			sd = client_socket[i];
+
+			if (FD_ISSET(sd, &read_s))
+			{
+				//Check if it was for closing , and also read the  
+				//incoming message  
+				if ((valread = recv(sd, recvbuf, recvbuflen, 0)) == 0)
+				{
+					//Somebody disconnected , get his details and print  
+					getpeername(sd, (struct sockaddr*)&SenderAddr, \
+						(socklen_t*)&SenderAddr);
+					printf("Host disconnected , ip %s , port %d \n",
+						inet_ntoa(SenderAddr.sin_addr), ntohs(SenderAddr.sin_port));
+
+					//Close the socket and mark as 0 in list for reuse  
+					//close(sd);
+					client_socket[i] = 0;
+				}
+
+				//Echo back the message that came in and show it 
+				else
+				{
+					wprintf(L"\n------MESSAGE-----------------------------------------\n");
+					printf("From: %s:%d\n", inet_ntoa(SenderAddr.sin_addr), ntohs(SenderAddr.sin_port));
+					printf("FromClient:%s\n", recvbuf);
+					wprintf(L"------------------------------------------------------\n");
+					//set the string terminating NULL byte on the end  
+					//of the data read  
+					for (int j = 0; j < MAX_CLIENTS, j != i; j++) // send everyone except sender
+					{
+						if (client_socket[i] != 0) {
+							iResult = send(sd, recvbuf, strlen(recvbuf), 0);
+							if (iResult == SOCKET_ERROR) {
+								wprintf(L"sendto failed with error: %d\n", WSAGetLastError());
+								//Close the socket and mark as 0 in list for reuse  
+								//close(sd);
+								client_socket[i] = 0;
+								WSACleanup();
+								return 1;
+							}
+						}
+					}
+					/*recvbuf[valread] = '\0';
+					send(sd, recvbuf, strlen(recvbuf), 0);*/
+				}
+			}
+		}
 	}
-
-	// cleanup
-	closesocket(ClientSocket);
-	WSACleanup();
-	system("PAUSE");
 	return 0;
 }
+
