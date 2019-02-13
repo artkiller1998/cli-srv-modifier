@@ -116,11 +116,13 @@ int main(int argc, char *argv[])
 
 	//int opt = TRUE;
 	int new_socket, client_socket[30],
-		activity, i, valread, sd;
+		activity, i, valread, sd, ssd;
 	int max_sd;
+	sockaddr_in senderaddr; //who connected
+	int senderaddrsize = sizeof (senderaddr);
 
 	//initialise all client_socket[] to 0 so not checked  
-	for (i = 0; i < MAX_CLIENTS; i++)
+	for (i = 0; i < MAX_CLIENTS; ++i)
 	{
 		client_socket[i] = 0;
 	}
@@ -135,7 +137,7 @@ int main(int argc, char *argv[])
 		max_sd = ListenSocket;
 
 		//add child sockets to set  
-		for (i = 0; i < MAX_CLIENTS; i++)
+		for (i = 0; i < MAX_CLIENTS; ++i)
 		{
 			//socket descriptor  
 			sd = client_socket[i];
@@ -170,7 +172,7 @@ int main(int argc, char *argv[])
 			}
 
 			//add new socket to array of sockets  
-			for (i = 0; i < MAX_CLIENTS; i++)
+			for (i = 0; i < MAX_CLIENTS; ++i)
 			{
 				//if position is empty  перебираем пока не найдем пустую €чейку
 				if (client_socket[i] == 0)
@@ -184,7 +186,7 @@ int main(int argc, char *argv[])
 		}
 
 		//else its some IO operation on some other socket 
-		for (i = 0; i < MAX_CLIENTS; i++)
+		for (i = 0; i < MAX_CLIENTS; ++i)
 		{
 			sd = client_socket[i];
 
@@ -192,13 +194,13 @@ int main(int argc, char *argv[])
 			{
 				//Check if it was for closing , and also read the  
 				//incoming message  
+				std::fill_n(recvbuf, 512, 0);
 				if ((valread = recv(sd, recvbuf, recvbuflen, 0)) == 0)
 				{
 					//Somebody disconnected , get his details and print  
-					getpeername(sd, (struct sockaddr*)&SenderAddr, \
-						(socklen_t*)&SenderAddr);
+					getpeername(sd, (struct sockaddr*)&senderaddr,(int *)&senderaddrsize);
 					printf("Host disconnected , ip %s , port %d \n",
-						inet_ntoa(SenderAddr.sin_addr), ntohs(SenderAddr.sin_port));
+						inet_ntoa(senderaddr.sin_addr), ntohs(senderaddr.sin_port));
 
 					//Close the socket and mark as 0 in list for reuse  
 					//close(sd);
@@ -208,16 +210,21 @@ int main(int argc, char *argv[])
 				//Echo back the message that came in and show it 
 				else
 				{
+					getpeername(sd, (struct sockaddr*)&senderaddr,(int *)&senderaddrsize);
 					wprintf(L"\n------MESSAGE-----------------------------------------\n");
-					printf("From: %s:%d\n", inet_ntoa(SenderAddr.sin_addr), ntohs(SenderAddr.sin_port));
-					printf("FromClient:%s\n", recvbuf);
+					printf("From %s:%d  %s\n", inet_ntoa(senderaddr.sin_addr), ntohs(senderaddr.sin_port), recvbuf);
 					wprintf(L"------------------------------------------------------\n");
 					//set the string terminating NULL byte on the end  
 					//of the data read  
-					for (int j = 0; j < MAX_CLIENTS, j != i; j++) // send everyone except sender
+					int j;
+					for (j = 0; j < MAX_CLIENTS; ++j) // send everyone except sender
 					{
-						if (client_socket[i] != 0) {
-							iResult = send(sd, recvbuf, strlen(recvbuf), 0);
+						if (i == j) {
+							continue;
+						}
+						ssd = client_socket[j];
+						if (ssd != 0) {
+							iResult = send(ssd, recvbuf, strlen(recvbuf), 0);
 							if (iResult == SOCKET_ERROR) {
 								wprintf(L"sendto failed with error: %d\n", WSAGetLastError());
 								//Close the socket and mark as 0 in list for reuse  
@@ -228,8 +235,6 @@ int main(int argc, char *argv[])
 							}
 						}
 					}
-					/*recvbuf[valread] = '\0';
-					send(sd, recvbuf, strlen(recvbuf), 0);*/
 				}
 			}
 		}

@@ -16,7 +16,7 @@
 #pragma comment (lib, "AdvApi32.lib")
 
 
-//#define DEFAULT_BUFLEN 512
+//#define MAX_CLIENTS 10
 //#define DEFAULT_PORT "27015"
 
 int __cdecl main(int argc, char **argv)
@@ -63,12 +63,6 @@ int __cdecl main(int argc, char **argv)
 		}
 		file.close();
 	}
-
-	//// Validate the parameters
-	//if (argc != 2) {
-	//	printf("usage: %s server-name\n", argv[0]);
-	//	return 1;
-	//}
 
 	// Initialize Winsock
 	iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
@@ -150,7 +144,7 @@ int __cdecl main(int argc, char **argv)
 			printf("FromServer:%s\n", recvbuf);
 		else if (iResult == 0)
 			printf("Connection closed\n");
-
+		
 		fflush(stdin);
 		gets(sendbuf);
 	} while (strcmp(sendbuf, "q") != 0);
