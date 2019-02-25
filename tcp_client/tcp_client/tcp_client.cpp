@@ -8,16 +8,54 @@
 #include <stdio.h>
 #include "fstream"
 #include "iostream"
-
+#include <thread>
+#include <atomic>
 
 // Need to link with Ws2_32.lib, Mswsock.lib, and Advapi32.lib
 #pragma comment (lib, "Ws2_32.lib")
 #pragma comment (lib, "Mswsock.lib")
 #pragma comment (lib, "AdvApi32.lib")
 
+std::atomic_bool thr_works = ATOMIC_VAR_INIT(true);
 
-//#define MAX_CLIENTS 10
-//#define DEFAULT_PORT "27015"
+void recvThread(SOCKET ConnectSocket, char * recvbuf,int recvbuflen, int iResult)
+{
+	while (thr_works)
+	{
+		std::fill_n(recvbuf, 512, 0);
+		iResult = recv(ConnectSocket, recvbuf, recvbuflen, 0);
+		if (iResult > 0)
+			printf("FS %s\n", recvbuf);
+		else if (iResult == 0) {
+			printf("Connection closed\n");
+			thr_works = ATOMIC_VAR_INIT(false);
+		}
+		Sleep(1);
+	}
+}
+
+void sendThread(SOCKET ConnectSocket, char *sendbuf, int iResult, char *nickname)
+{
+	char msg[512] = "";
+
+	while (thr_works)
+	{
+		fflush(stdin);
+		gets(sendbuf);
+		if (strcmp(sendbuf, "q") == 0)
+		{
+			thr_works = ATOMIC_VAR_INIT(false);
+			break;
+		}
+		strcat(msg, nickname);
+		strcat(msg, ": ");
+		strcat(msg, sendbuf);
+		iResult = send(ConnectSocket, msg, (int)strlen(msg), 0);
+		printf("TS %s\n", msg);
+		std::fill_n(msg, 512, 0);
+		Sleep(1);
+	}
+}
 
 int __cdecl main(int argc, char **argv)
 {
@@ -36,6 +74,7 @@ int __cdecl main(int argc, char **argv)
 	char RecvIP[50] = "";
 	char RecvPort[20] = "";
 	int SendPort = 0;
+	char nickname[50] = "";
 
 	if (argc == 4) {
 		strcpy(RecvIP, argv[1]);
@@ -70,6 +109,11 @@ int __cdecl main(int argc, char **argv)
 		printf("WSAStartup failed with error: %d\n", iResult);
 		return 1;
 	}
+
+	// Initialize user
+	printf("Enter your nickname:");
+	fflush(stdin);
+	gets(nickname);
 
 	ZeroMemory(&hints, sizeof(hints));
 	hints.ai_family = AF_UNSPEC;
@@ -133,22 +177,20 @@ int __cdecl main(int argc, char **argv)
 		return -1;
 	}
 
-	do {
-		// Send message
-		iResult = send(ConnectSocket, sendbuf, (int)strlen(sendbuf), 0);
-		printf("ToServer:%s\n", sendbuf);
-
-		std::fill_n(recvbuf, 512, 0);
-		iResult = recv(ConnectSocket, recvbuf, recvbuflen, 0);
-		if (iResult > 0)
-			printf("FromServer:%s\n", recvbuf);
-		else if (iResult == 0)
-			printf("Connection closed\n");
-		
-		fflush(stdin);
-		gets(sendbuf);
-	} while (strcmp(sendbuf, "q") != 0);
-
+	printf("Connected to the server!\nTo exit print: q\n");
+	char msg[512] = "";
+	strcat(msg, nickname);
+	strcat(msg, ": ");
+	strcat(msg, sendbuf);
+	iResult = send(ConnectSocket, msg, (int)strlen(msg), 0);
+	printf("TS %s\n", msg);
+	//Два потока для получения и отправки. Глобальный флаг завершает поток приема при прерывании пользователем.Join ждет завершения потока
+	std::thread recv_t(recvThread, ConnectSocket, recvbuf, recvbuflen, iResult);
+	std::thread send_t(sendThread, ConnectSocket, sendbuf, iResult, nickname);
+	
+	send_t.join();
+	recv_t.join();
+	
 	iResult = shutdown(ConnectSocket, SD_SEND);
 	if (iResult == SOCKET_ERROR) {
 		printf("shutdown failed with error: %d\n", WSAGetLastError());
