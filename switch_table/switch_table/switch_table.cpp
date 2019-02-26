@@ -29,8 +29,12 @@ typedef struct mac_header{
 std::atomic_bool thr_err = ATOMIC_VAR_INIT(false);
 std::mutex lock_mutex;
 std::map<mac_address, int> sw_table;
+std::queue<mac_address> sw_queue;
 std::map<mac_address, int>::iterator it;
 int timeout = 20;
+mac_address iface1_mac;
+mac_address iface2_mac;
+int count_rm_records = 0;
 
 void print_sw_table(){
 	for (it = sw_table.begin(); it != sw_table.end(); it++)
@@ -183,6 +187,55 @@ void iface2_thr(pcap_if_t *d, pcap_t *adhandle, u_int netmask, struct bpf_progra
 	pcap_loop(adhandle, 0, packet_handler, (u_char *)"2");
 }
 
+void counter_remover()
+{
+	while (1)
+	{
+		Sleep(timeout * 1000);
+		//printf("now tmo = %d", timeout);
+		if (!sw_table.empty())
+		{
+			//printf("del ");
+			/*printf("%02X:%02X:%02X:%02X:%02X:%02X	\n", sw_queue.front().byte1,
+				sw_queue.front().byte2,
+				sw_queue.front().byte3,
+				sw_queue.front().byte4,
+				sw_queue.front().byte5,
+				sw_queue.front().byte6);*/
+			sw_table.erase(sw_queue.front());
+			sw_queue.pop();
+		}
+	}
+	/*
+	lock_mutex.lock();
+	while (1)
+	{
+		
+		printf("\ntime %d timeout %d     %d \n", time(NULL), timeout, (time(NULL) % timeout));
+		if ((time(NULL) % timeout) == 0)
+		{
+			count_rm_records++;
+			printf("\ncrr %d \n", count_rm_records);
+			Sleep(1000);
+		}
+
+		while (count_rm_records != 0)
+		{
+			if (sw_table.empty())
+			{
+				printf("\nclear %d \n", count_rm_records);
+				count_rm_records = 0;
+				break;
+			}
+			sw_table.erase(sw_queue.front());
+			sw_queue.pop();
+			count_rm_records--;
+			Sleep(1000);
+		}
+	}
+	lock_mutex.unlock();*/
+}
+
 int main()
 {
 	pcap_if_t *alldevs; //элемент в списке интерфейсов
@@ -218,11 +271,28 @@ int main()
 		return -1;
 	}
 
+	iface1_mac.byte1 = '00';
+	iface1_mac.byte2 = '50';
+	iface1_mac.byte3 = '56';
+	iface1_mac.byte4 = '3C';
+	iface1_mac.byte5 = 'BE';
+	iface1_mac.byte6 = '93';
+
+	iface2_mac.byte1 = '00';
+	iface2_mac.byte2 = '50';
+	iface2_mac.byte3 = '56';
+	iface2_mac.byte4 = '26';
+	iface2_mac.byte5 = 'F8';
+	iface2_mac.byte6 = 'AE';
+
+
+	std::thread thr_3(counter_remover);
 	/* Jump to the selected adapter переместить указатель на выбранный адаптер*/
-	d = alldevs;
-	std::thread thr_1(iface1_thr, d, adhandle, netmask, fcode, packet_filter);
-	d = d->next;
+	d = alldevs;																//тут важно интерф 1 соотв сегменту CD.. поменяем функции местами
 	std::thread thr_2(iface2_thr, d, adhandle, netmask, fcode, packet_filter);
+	d = d->next;
+	std::thread thr_1(iface1_thr, d, adhandle, netmask, fcode, packet_filter);
+
 	while (ch != 'q')
 	{
 		system("cls");
@@ -238,7 +308,7 @@ int main()
 			break;
 		case '2':
 			printf("Input record timeout in secs:\n");
-			timeout = (int)getchar();
+			scanf("%d", &timeout);
 			break;
 		case 'q':
 			ch = 'q';
@@ -252,21 +322,62 @@ int main()
 	
 	thr_1.join();
 	thr_2.join();
+	thr_3.join();
 	pcap_freealldevs(alldevs);
 	return 0;
 }
 
+
+
 /* Callback function invoked by libpcap for every incoming packet    Функция обратного вызова вызывается в libpcap для каждого входящего пакета*/
 void packet_handler(u_char *param, const struct pcap_pkthdr *header, const u_char *pkt_data) //unsigned, Каждый пакет в файле дампа добавляется к этому универсальному заголовку. 																					
 {
-	//if ( ((time(NULL) % timeout) == 0)
-		
 	mac_header *mh;
 	mh = (mac_header *)(pkt_data);
+
 	lock_mutex.lock();
+
+	//if ( (time(NULL) % timeout) == 0)
+	//{
+	//	count_rm_records++;
+	//}
+
+	//while (count_rm_records != 0)
+	//{
+	//	if (sw_table.empty())
+	//	{
+	//		count_rm_records = 0;
+	//		break;
+	//	}
+	//	sw_table.erase(sw_queue.front());
+	//	sw_queue.pop();
+	//	count_rm_records--;
+	//}
+		
+
+	if (sw_table.find(mh->smac) == sw_table.end())
+		sw_queue.push(mh->smac);			//таким образом имеем очередь с мак адресами без повторов. которые надо удалять в порядке следования очереди
 	sw_table.insert(std::pair<mac_address, int>((mac_address)mh->smac, atoi((const char *)param)));
+	it = sw_table.find(mh->dmac);
+
+	if ((it != sw_table.end()) && (it->second != atoi((const char *)param)))
+	{
+		switch (atoi((const char *)param))
+		{
+		case 1:
+			mh->dmac = iface2_mac;
+			break;
+		case 2:
+			mh->dmac = iface2_mac;
+			break;
+		default:
+			mh->dmac = mh->smac;
+			break;
+		}
+	}
+			
 	lock_mutex.unlock();
-	//print_sw_table();
+
 }
 
 bool mac_address:: operator==(const mac_address &o)const {

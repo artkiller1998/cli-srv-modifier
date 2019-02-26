@@ -1,14 +1,40 @@
-﻿Build started 25.02.2019 22:40:43.
-     1>Project "C:\Users\Denis Rodrigez\documents\visual studio 2013\Projects\switch_table\switch_table\switch_table.vcxproj" on node 2 (Build target(s)).
+﻿Build started 26.02.2019 21:45:53.
+     1>Project "C:\Users\Denis Rodrigez\Documents\Visual Studio 2013\Projects\switch_table\switch_table\switch_table.vcxproj" on node 2 (Build target(s)).
      1>ClCompile:
          C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\CL.exe /c /I"C:\Program Files (x86)\Microsoft Visual Studio 11.0\VC\include" /I"C:\Program Files (x86)\WinPcap\WpdPack\Include" /ZI /nologo /W3 /WX- /Od /Oy- /D WIN32 /D _DEBUG /D _CONSOLE /D _LIB /D WPCAP /D HAVE_REMOTE /D _USING_V110_SDK71_ /D _UNICODE /D UNICODE /Gm /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Fo"Debug\\" /Fd"Debug\vc120.pdb" /Gd /TP /analyze- /errorReport:prompt switch_table.cpp
          switch_table.cpp
+     1>c:\users\denis rodrigez\documents\visual studio 2013\projects\switch_table\switch_table\switch_table.cpp(274): warning C4305: '=' : truncation from 'int' to 'u_char'
+     1>c:\users\denis rodrigez\documents\visual studio 2013\projects\switch_table\switch_table\switch_table.cpp(274): warning C4309: '=' : truncation of constant value
+     1>c:\users\denis rodrigez\documents\visual studio 2013\projects\switch_table\switch_table\switch_table.cpp(275): warning C4305: '=' : truncation from 'int' to 'u_char'
+     1>c:\users\denis rodrigez\documents\visual studio 2013\projects\switch_table\switch_table\switch_table.cpp(275): warning C4309: '=' : truncation of constant value
+     1>c:\users\denis rodrigez\documents\visual studio 2013\projects\switch_table\switch_table\switch_table.cpp(276): warning C4305: '=' : truncation from 'int' to 'u_char'
+     1>c:\users\denis rodrigez\documents\visual studio 2013\projects\switch_table\switch_table\switch_table.cpp(276): warning C4309: '=' : truncation of constant value
+     1>c:\users\denis rodrigez\documents\visual studio 2013\projects\switch_table\switch_table\switch_table.cpp(277): warning C4305: '=' : truncation from 'int' to 'u_char'
+     1>c:\users\denis rodrigez\documents\visual studio 2013\projects\switch_table\switch_table\switch_table.cpp(277): warning C4309: '=' : truncation of constant value
+     1>c:\users\denis rodrigez\documents\visual studio 2013\projects\switch_table\switch_table\switch_table.cpp(278): warning C4305: '=' : truncation from 'int' to 'u_char'
+     1>c:\users\denis rodrigez\documents\visual studio 2013\projects\switch_table\switch_table\switch_table.cpp(278): warning C4309: '=' : truncation of constant value
+     1>c:\users\denis rodrigez\documents\visual studio 2013\projects\switch_table\switch_table\switch_table.cpp(279): warning C4305: '=' : truncation from 'int' to 'u_char'
+     1>c:\users\denis rodrigez\documents\visual studio 2013\projects\switch_table\switch_table\switch_table.cpp(279): warning C4309: '=' : truncation of constant value
+     1>c:\users\denis rodrigez\documents\visual studio 2013\projects\switch_table\switch_table\switch_table.cpp(281): warning C4305: '=' : truncation from 'int' to 'u_char'
+     1>c:\users\denis rodrigez\documents\visual studio 2013\projects\switch_table\switch_table\switch_table.cpp(281): warning C4309: '=' : truncation of constant value
+     1>c:\users\denis rodrigez\documents\visual studio 2013\projects\switch_table\switch_table\switch_table.cpp(282): warning C4305: '=' : truncation from 'int' to 'u_char'
+     1>c:\users\denis rodrigez\documents\visual studio 2013\projects\switch_table\switch_table\switch_table.cpp(282): warning C4309: '=' : truncation of constant value
+     1>c:\users\denis rodrigez\documents\visual studio 2013\projects\switch_table\switch_table\switch_table.cpp(283): warning C4305: '=' : truncation from 'int' to 'u_char'
+     1>c:\users\denis rodrigez\documents\visual studio 2013\projects\switch_table\switch_table\switch_table.cpp(283): warning C4309: '=' : truncation of constant value
+     1>c:\users\denis rodrigez\documents\visual studio 2013\projects\switch_table\switch_table\switch_table.cpp(284): warning C4305: '=' : truncation from 'int' to 'u_char'
+     1>c:\users\denis rodrigez\documents\visual studio 2013\projects\switch_table\switch_table\switch_table.cpp(284): warning C4309: '=' : truncation of constant value
+     1>c:\users\denis rodrigez\documents\visual studio 2013\projects\switch_table\switch_table\switch_table.cpp(285): warning C4305: '=' : truncation from 'int' to 'u_char'
+     1>c:\users\denis rodrigez\documents\visual studio 2013\projects\switch_table\switch_table\switch_table.cpp(285): warning C4309: '=' : truncation of constant value
+     1>c:\users\denis rodrigez\documents\visual studio 2013\projects\switch_table\switch_table\switch_table.cpp(286): warning C4305: '=' : truncation from 'int' to 'u_char'
+     1>c:\users\denis rodrigez\documents\visual studio 2013\projects\switch_table\switch_table\switch_table.cpp(286): warning C4309: '=' : truncation of constant value
+     1>c:\users\denis rodrigez\documents\visual studio 2013\projects\switch_table\switch_table\switch_table.cpp(311): warning C4996: 'scanf': This function or variable may be unsafe. Consider using scanf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+                 c:\program files (x86)\microsoft visual studio 11.0\vc\include\stdio.h(290) : see declaration of 'scanf'
        Link:
-         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\link.exe /ERRORREPORT:PROMPT /OUT:"C:\Users\Denis Rodrigez\documents\visual studio 2013\Projects\switch_table\Debug\switch_table.exe" /INCREMENTAL /NOLOGO /LIBPATH:"C:\Program Files (x86)\WinPcap\WpdPack\Lib" /LIBPATH:"C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\lib" /LIBPATH:"C:\Program Files (x86)\Microsoft Visual Studio 11.0\VC\lib" Packet.lib wpcap.lib ws2_32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:"C:\Users\Denis Rodrigez\documents\visual studio 2013\Projects\switch_table\Debug\switch_table.pdb" /SUBSYSTEM:CONSOLE,"5.01" /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"C:\Users\Denis Rodrigez\documents\visual studio 2013\Projects\switch_table\Debug\switch_table.lib" /MACHINE:X86 Debug\stdafx.obj
+         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\link.exe /ERRORREPORT:PROMPT /OUT:"C:\Users\Denis Rodrigez\Documents\Visual Studio 2013\Projects\switch_table\Debug\switch_table.exe" /INCREMENTAL /NOLOGO /LIBPATH:"C:\Program Files (x86)\WinPcap\WpdPack\Lib" /LIBPATH:"C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\lib" /LIBPATH:"C:\Program Files (x86)\Microsoft Visual Studio 11.0\VC\lib" Packet.lib wpcap.lib ws2_32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:"C:\Users\Denis Rodrigez\Documents\Visual Studio 2013\Projects\switch_table\Debug\switch_table.pdb" /SUBSYSTEM:CONSOLE,"5.01" /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"C:\Users\Denis Rodrigez\Documents\Visual Studio 2013\Projects\switch_table\Debug\switch_table.lib" /MACHINE:X86 Debug\stdafx.obj
          Debug\switch_table.obj
-         switch_table.vcxproj -> C:\Users\Denis Rodrigez\documents\visual studio 2013\Projects\switch_table\Debug\switch_table.exe
-     1>Done Building Project "C:\Users\Denis Rodrigez\documents\visual studio 2013\Projects\switch_table\switch_table\switch_table.vcxproj" (Build target(s)).
+         switch_table.vcxproj -> C:\Users\Denis Rodrigez\Documents\Visual Studio 2013\Projects\switch_table\Debug\switch_table.exe
+     1>Done Building Project "C:\Users\Denis Rodrigez\Documents\Visual Studio 2013\Projects\switch_table\switch_table\switch_table.vcxproj" (Build target(s)).
 
 Build succeeded.
 
-Time Elapsed 00:00:01.97
+Time Elapsed 00:00:01.28
