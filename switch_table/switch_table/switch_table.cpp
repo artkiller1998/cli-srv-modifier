@@ -336,25 +336,7 @@ void packet_handler(u_char *param, const struct pcap_pkthdr *header, const u_cha
 	mh = (mac_header *)(pkt_data);
 
 	lock_mutex.lock();
-
-	//if ( (time(NULL) % timeout) == 0)
-	//{
-	//	count_rm_records++;
-	//}
-
-	//while (count_rm_records != 0)
-	//{
-	//	if (sw_table.empty())
-	//	{
-	//		count_rm_records = 0;
-	//		break;
-	//	}
-	//	sw_table.erase(sw_queue.front());
-	//	sw_queue.pop();
-	//	count_rm_records--;
-	//}
 		
-
 	if (sw_table.find(mh->smac) == sw_table.end())
 		sw_queue.push(mh->smac);			//таким образом имеем очередь с мак адресами без повторов. которые надо удалять в порядке следования очереди
 	sw_table.insert(std::pair<mac_address, int>((mac_address)mh->smac, atoi((const char *)param)));
@@ -362,6 +344,7 @@ void packet_handler(u_char *param, const struct pcap_pkthdr *header, const u_cha
 
 	if ((it != sw_table.end()) && (it->second != atoi((const char *)param)))
 	{
+		printf("translate to other iface");
 		switch (atoi((const char *)param))
 		{
 		case 1:
@@ -377,7 +360,6 @@ void packet_handler(u_char *param, const struct pcap_pkthdr *header, const u_cha
 	}
 			
 	lock_mutex.unlock();
-
 }
 
 bool mac_address:: operator==(const mac_address &o)const {
