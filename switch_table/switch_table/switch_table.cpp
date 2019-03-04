@@ -6,6 +6,7 @@
 #include <mutex>
 #include <ctime>
 #include <queue>
+#include <set>
 
 typedef struct mac_address{
 	u_char byte1;
@@ -17,7 +18,6 @@ typedef struct mac_address{
 
 	bool  operator==(const mac_address &o)const;
 	bool  operator<(const mac_address &o)const;
-	//void print_sw_table();
 }mac_address;
 
 typedef struct mac_header{
@@ -31,14 +31,14 @@ std::mutex lock_mutex;
 std::map<mac_address, int> sw_table;
 std::queue<mac_address> sw_queue;
 std::map<mac_address, int>::iterator it;
-int timeout = 20;
-mac_address iface1_mac;
-mac_address iface2_mac;
-int count_rm_records = 0;
+std::map<mac_address, int>::iterator it_s;
+int timeout = 15;
+pcap_t *iface1;
+pcap_t *iface2;
+mac_address brd_mac;
 
 void print_sw_table(){
-	for (it = sw_table.begin(); it != sw_table.end(); it++)
-	{
+	for (it = sw_table.begin(); it != sw_table.end(); it++) {
 		printf("%02X:%02X:%02X:%02X:%02X:%02X				%d\n", it->first.byte1,
 																   it->first.byte2,
 																   it->first.byte3, 
@@ -47,7 +47,6 @@ void print_sw_table(){
 																   it->first.byte6, 
 																   it->second);
 	}
-	
 }
 
 /* prototype of the packet handler */
@@ -80,14 +79,13 @@ void iface1_thr(pcap_if_t *d, pcap_t *adhandle, u_int netmask, struct bpf_progra
 		//pcap_freealldevs(alldevs);
 		thr_err = ATOMIC_VAR_INIT(true);
 	}
-
+	
 	if (d->addresses != NULL)
 		/* Retrieve the mask of the first address of the interface  узнает маску сети*/
 		netmask = ((struct sockaddr_in *)(d->addresses->netmask))->sin_addr.S_un.S_addr;
 	else
 		/* If the interface is without addresses we suppose to be in a C class network  если не узнал то по умолчанию класс С(255.255.255.0)*/
 		netmask = 0xffffff;
-
 
 	//compile the filter собрираем фильтр 
 	if (pcap_compile(adhandle, &fcode, packet_filter, 1, netmask) <0)		//если ош (плохие параметры , мб массив) освоб
@@ -109,11 +107,7 @@ void iface1_thr(pcap_if_t *d, pcap_t *adhandle, u_int netmask, struct bpf_progra
 
 	printf("\nlistening on %s...\n", d->description);			//при наличии интерфейса выведет описание. 
 
-	/* At this point, we don't need any more the device list. Free it Список устр не нужен. Освободим его*/
-	//pcap_freealldevs(alldevs);
-	
-
-
+	iface1 = adhandle;
 
 	/* start the capture начинаем слушать
 	луп pcap_loop () похож на pcap_dispatch (), за исключением того,
@@ -122,7 +116,6 @@ void iface1_thr(pcap_if_t *d, pcap_t *adhandle, u_int netmask, struct bpf_progra
 }
 
 void iface2_thr(pcap_if_t *d, pcap_t *adhandle, u_int netmask, struct bpf_program fcode, char *packet_filter)
-//{}
 {
 	char *errbuf = "";
 	/* Open the adapter Открывает универсальный(общий) источник для захвата / передачи трафика.*/
@@ -180,7 +173,7 @@ void iface2_thr(pcap_if_t *d, pcap_t *adhandle, u_int netmask, struct bpf_progra
 
 	/* At this point, we don't need any more the device list. Free it Список устр не нужен. Освободим его*/
 	//pcap_freealldevs(alldevs);
-
+	iface2 = adhandle;
 	/* start the capture начинаем слушать
 	луп pcap_loop () похож на pcap_dispatch (), за исключением того,
 	что он продолжает считывать пакеты до тех пор, пока не будут обработаны пакеты cnt или возникнет ошибка*/
@@ -192,48 +185,12 @@ void counter_remover()
 	while (1)
 	{
 		Sleep(timeout * 1000);
-		//printf("now tmo = %d", timeout);
 		if (!sw_table.empty())
 		{
-			//printf("del ");
-			/*printf("%02X:%02X:%02X:%02X:%02X:%02X	\n", sw_queue.front().byte1,
-				sw_queue.front().byte2,
-				sw_queue.front().byte3,
-				sw_queue.front().byte4,
-				sw_queue.front().byte5,
-				sw_queue.front().byte6);*/
 			sw_table.erase(sw_queue.front());
 			sw_queue.pop();
 		}
 	}
-	/*
-	lock_mutex.lock();
-	while (1)
-	{
-		
-		printf("\ntime %d timeout %d     %d \n", time(NULL), timeout, (time(NULL) % timeout));
-		if ((time(NULL) % timeout) == 0)
-		{
-			count_rm_records++;
-			printf("\ncrr %d \n", count_rm_records);
-			Sleep(1000);
-		}
-
-		while (count_rm_records != 0)
-		{
-			if (sw_table.empty())
-			{
-				printf("\nclear %d \n", count_rm_records);
-				count_rm_records = 0;
-				break;
-			}
-			sw_table.erase(sw_queue.front());
-			sw_queue.pop();
-			count_rm_records--;
-			Sleep(1000);
-		}
-	}
-	lock_mutex.unlock();*/
 }
 
 int main()
@@ -271,19 +228,12 @@ int main()
 		return -1;
 	}
 
-	iface1_mac.byte1 = '00';
-	iface1_mac.byte2 = '50';
-	iface1_mac.byte3 = '56';
-	iface1_mac.byte4 = '3C';
-	iface1_mac.byte5 = 'BE';
-	iface1_mac.byte6 = '93';
-
-	iface2_mac.byte1 = '00';
-	iface2_mac.byte2 = '50';
-	iface2_mac.byte3 = '56';
-	iface2_mac.byte4 = '26';
-	iface2_mac.byte5 = 'F8';
-	iface2_mac.byte6 = 'AE';
+	brd_mac.byte1 = 0xFF;
+	brd_mac.byte2 = 0xFF;
+	brd_mac.byte3 = 0xFF;
+	brd_mac.byte4 = 0xFF;
+	brd_mac.byte5 = 0xFF;
+	brd_mac.byte6 = 0xFF;
 
 
 	std::thread thr_3(counter_remover);
@@ -327,43 +277,106 @@ int main()
 	return 0;
 }
 
-
-
 /* Callback function invoked by libpcap for every incoming packet    Функция обратного вызова вызывается в libpcap для каждого входящего пакета*/
 void packet_handler(u_char *param, const struct pcap_pkthdr *header, const u_char *pkt_data) //unsigned, Каждый пакет в файле дампа добавляется к этому универсальному заголовку. 																					
 {
+	lock_mutex.lock();
+
 	mac_header *mh;
 	mh = (mac_header *)(pkt_data);
-
-	lock_mutex.lock();
-		
-	if (sw_table.find(mh->smac) == sw_table.end())
+	int if_num = atoi((const char *)param);
+	if (sw_table.find(mh->smac) == sw_table.end()) {
 		sw_queue.push(mh->smac);			//таким образом имеем очередь с мак адресами без повторов. которые надо удалять в порядке следования очереди
-	sw_table.insert(std::pair<mac_address, int>((mac_address)mh->smac, atoi((const char *)param)));
+	}
+	sw_table.insert(std::pair<mac_address, int>((mac_address)mh->smac, if_num));
 	it = sw_table.find(mh->dmac);
+	it_s = sw_table.find(mh->smac);
 
-	if ((it != sw_table.end()) && (it->second != atoi((const char *)param)))
-	{
-		printf("translate to other iface");
-		switch (atoi((const char *)param))
-		{
-		case 1:
-			mh->dmac = iface2_mac;
-			break;
-		case 2:
-			mh->dmac = iface2_mac;
-			break;
-		default:
-			mh->dmac = mh->smac;
-			break;
+	if (it_s != sw_table.end() && it != sw_table.end()) {
+		if (it_s->second == if_num && it->second != if_num) {
+			switch (it_s->second) {
+			case 1: {
+						if (pcap_sendpacket(iface2, pkt_data, header->len) != 0) {
+							fprintf(stderr, "\nError sending the packet: %s\n", pcap_geterr((pcap_t *)param));
+							return;
+						}
+						break;
+			}
+			case 2: {
+						if (pcap_sendpacket(iface1, pkt_data, header->len) != 0) {
+							fprintf(stderr, "\nError sending the packet: %s\n", pcap_geterr((pcap_t *)param));
+							return;
+						}
+						break;
+			}
+			}
 		}
 	}
-			
+	else if (it != sw_table.end()) {
+		if (it->second != if_num) {
+			switch (it_s->second) {
+			case 1: {
+						if (pcap_sendpacket(iface2, pkt_data, header->len) != 0) {
+							fprintf(stderr, "\nError sending the packet: %s\n", pcap_geterr((pcap_t *)param));
+							return;
+						}
+						break;
+			}
+			case 2: {
+						if (pcap_sendpacket(iface1, pkt_data, header->len) != 0) {
+							fprintf(stderr, "\nError sending the packet: %s\n", pcap_geterr((pcap_t *)param));
+							return;
+						}
+						break;
+			}
+			}
+		}
+	}
+	else if (it_s != sw_table.end() ) {
+		if (it_s->second == if_num) {
+			switch (it_s->second) {
+			case 1: {
+						if (pcap_sendpacket(iface2, pkt_data, header->len) != 0) {
+							fprintf(stderr, "\nError sending the packet: %s\n", pcap_geterr((pcap_t *)param));
+							return;
+						}
+						break;
+			}
+			case 2: {
+						if (pcap_sendpacket(iface1, pkt_data, header->len) != 0) {
+							fprintf(stderr, "\nError sending the packet: %s\n", pcap_geterr((pcap_t *)param));
+							return;
+						}
+						break;
+			}
+			}
+		}
+	}
+	else
+	{
+		switch (if_num) {
+		case 1: {
+					if (pcap_sendpacket(iface2, pkt_data, header->len) != 0) {
+						fprintf(stderr, "\nError sending the packet: %s\n", pcap_geterr((pcap_t *)param));
+						return;
+					}
+					break;
+		}
+		case 2: {
+					if (pcap_sendpacket(iface1, pkt_data, header->len) != 0) {
+						fprintf(stderr, "\nError sending the packet: %s\n", pcap_geterr((pcap_t *)param));
+						return;
+					}
+					break;
+		}
+		}
+	}
+	
 	lock_mutex.unlock();
 }
-
+	
 bool mac_address:: operator==(const mac_address &o)const {
-	return byte1 == o.byte1 || byte1 == o.byte1 && byte2 == o.byte2;
+	return byte1 == o.byte1 && byte2 == o.byte2 && byte3 == o.byte3 && byte4 == o.byte4 && byte5 == o.byte5 && byte6 == o.byte6;
 }
 
 bool mac_address:: operator<(const mac_address &o)const {
@@ -372,3 +385,4 @@ bool mac_address:: operator<(const mac_address &o)const {
 		|| byte1 == o.byte1 && byte2 == o.byte2 && byte3 == o.byte3 && byte4 == o.byte4 && byte5 < o.byte5
 		|| byte1 == o.byte1 && byte2 == o.byte2 && byte3 == o.byte3 && byte4 == o.byte4 && byte5 == o.byte5 && byte6 < o.byte6;
 }
+
