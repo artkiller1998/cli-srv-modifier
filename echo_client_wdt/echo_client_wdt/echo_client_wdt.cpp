@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #ifndef UNICODE
+#define UNICODE
 #endif
 
 #define WIN32_LEAN_AND_MEAN
@@ -8,7 +9,6 @@
 #include <Ws2tcpip.h>
 #include <stdio.h>
 #include "iostream"
-#include "fstream"
 
 // Link with ws2_32.lib
 #pragma comment(lib, "Ws2_32.lib")\
@@ -16,44 +16,39 @@
 
 int main(int argc, char *argv[])
 {
+
 	int iResult;
 	WSADATA wsaData;
 
 	SOCKET SendSocket = INVALID_SOCKET;
 	sockaddr_in RecvAddr;
-	int SenderAddrSize = sizeof (RecvAddr);
 
 	char RecvIP[50]= "";
 	unsigned short RecvPort = 0;
 	unsigned short SendPort = 0;
-	int BufLen = 1024;
-	char RecvBuf[1024];
-	char SendBuf[1024];
 
-	if (argc == 4) {
+	char RecvBuf[1024];
+	int SenderAddrSize = sizeof (RecvAddr);
+	char SendBuf[1024];
+	int BufLen = 1024;
+
+	if (argc < 4)
+	{
+		printf("Enter the receiver ip address:");
+		//fflush(stdin);
+		gets(RecvIP);
+		printf("Enter the  receiver port number:");
+		std::cin >> RecvPort;
+		printf("Enter the sender port number:");
+		std::cin >> SendPort;
+	}
+	else
+	{
 		strcpy(RecvIP, argv[1]);
 		RecvPort = atoi(argv[2]);
 		SendPort = atoi(argv[3]);
 	}
-	else {
-		std::fstream file("udp_client.cfg");
-		if (file.is_open() && file.peek() != EOF) {
-			printf("udp_client.cfg --- is opened\n\n"); // если открылся
-			file >> RecvIP;
-			file >> RecvPort;
-			file >> SendPort;
-		}
-		else {
-			printf("udp_client.cfg --- is empty or can`t be opened!\n"); // если первый символ конец файла
-			printf("Enter the receiver ip address:");
-			gets(RecvIP);
-			printf("Enter the  receiver port number:");
-			std::cin >> RecvPort;
-			printf("Enter the sender port number:");
-			std::cin >> SendPort;
-		}
-		file.close();
-	}
+	
 	//----------------------
 	// Initialize Winsock
 	iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
@@ -61,6 +56,7 @@ int main(int argc, char *argv[])
 		wprintf(L"WSAStartup failed with error: %d\n", iResult);
 		return 1;
 	}
+
 	//---------------------------------------------
 	// Create a socket for sending data
 	SendSocket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
@@ -70,26 +66,32 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 	//---------------------------------------------
+
+	//---------------------------------------------
 	// Set port of the socket using bind option
 	sockaddr_in SendAddr;	//adress of the sender
 	SendAddr.sin_family = AF_INET;
 	SendAddr.sin_addr.S_un.S_addr = htonl(INADDR_ANY);
 	SendAddr.sin_port = htons(SendPort); //set port
-	if (SOCKET_ERROR == bind(SendSocket, (sockaddr*)&SendAddr, sizeof (SendAddr))){
+	if (SOCKET_ERROR == bind(SendSocket, (sockaddr*)&SendAddr, sizeof (SendAddr)))
+	{
 		return E_FAIL;
 	}
 	//---------------------------------------------
+
 	// Set up the RecvAddr structure with the IP address of
 	// the receiver (in this example case "192.168.1.1")
 	// and the specified port number.
 	RecvAddr.sin_family = AF_INET;
 	RecvAddr.sin_port = htons(RecvPort);
 	RecvAddr.sin_addr.s_addr = inet_addr(RecvIP);
+
 	while (true)
 	{
 		//---------------------------------------------
 		// Send a datagram to the receiver
-		wprintf(L"\nEnter text of the message:\n");
+		wprintf(L"Enter text of the message:\n");
+		//fflush(stdin);
 		gets(SendBuf);
 		wprintf(L"Sending a datagram to the receiver...\n");
 		iResult = sendto(SendSocket,
@@ -101,20 +103,27 @@ int main(int argc, char *argv[])
 			return 1;
 		}
 		//---------------------------------------------
+
+		//---------------------------------------------
 		// Checking a check-datagram from the receiver
+
+
 		iResult = recvfrom(SendSocket,
 			RecvBuf, BufLen, 0, (SOCKADDR *)& RecvAddr, &SenderAddrSize);
 		if (iResult == SOCKET_ERROR) {
 			wprintf(L"recvfrom failed with error %d\n", WSAGetLastError());
 		}
-		printf("ToServer:%s\n", SendBuf);
-		printf("FromServer:%s\n", RecvBuf);
-		if (strcmp(RecvBuf, SendBuf) != 0) {
+		if (strcmp(RecvBuf, SendBuf) == 0) {
+			wprintf(L"Checking the sending status.........OK\n\n");
+		}
+		else
+		{
 			printf("%s is not %s\n", RecvBuf, SendBuf);
 			wprintf(L"Checking the sending status.........ERROR\n\n");
 		}
 		//---------------------------------------------
 	}
+
 	// When the application is finished sending, close the socket.
 	wprintf(L"Finished sending. Closing socket.\n");
 	iResult = closesocket(SendSocket);
