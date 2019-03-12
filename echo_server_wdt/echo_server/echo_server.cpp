@@ -3,6 +3,7 @@
 #include <Ws2tcpip.h>
 #include <stdio.h>
 #include "iostream"
+#include "fstream"
 // Link with ws2_32.lib
 #pragma comment(lib, "Ws2_32.lib")
 
@@ -35,16 +36,20 @@ int main(int argc, char *argv[])
 	}
 	//-----------------------------------------------
 	// Bind the socket to any address and the specified port.
-	//printf("Enter the port number:");
-	//std::cin >> Port;
-	if (argc == 1)
-	{
-		printf("Enter the port number:");
-		std::cin >> Port;
+	if (argc == 2) {
+		Port = atoi(argv[1]);
 	}
-	else
-	{
-		Port = atoi(argv[2]);
+	else {
+		std::fstream file("udp_server.cfg");
+		if (file.is_open() && file.peek() != EOF) {
+			printf("udp_server.cfg --- is opened\n\n"); // если открылся
+			file >> Port;
+		}
+		else {
+			printf("Enter the  receiver port number:");
+			std::cin >> Port;
+		}
+		file.close();
 	}
 	RecvAddr.sin_family = AF_INET;
 	RecvAddr.sin_port = htons(Port);
@@ -54,13 +59,12 @@ int main(int argc, char *argv[])
 		wprintf(L"bind failed with error %d\n", WSAGetLastError());
 		return 1;
 	}
+	//-----------------------------------------------
 	wprintf(L"Receiving datagrams...\n");
 	while (true)
 	{
-		//-----------------------------------------------
 		// Call the recvfrom function to receive datagrams
 		// on the bound socket.
-
 		iResult = recvfrom(RecvSocket,
 			RecvBuf, BufLen, 0, (SOCKADDR *)&SenderAddr, &SenderAddrSize);
 		if (iResult == SOCKET_ERROR) {
@@ -69,11 +73,9 @@ int main(int argc, char *argv[])
 		//-----------------------------------------------
 		// Print content of buffer
 		wprintf(L"\n------MESSAGE-----------------------------------------\n");
-		printf("From: %s:%d\n", inet_ntoa(SenderAddr.sin_addr), ntohs(SenderAddr.sin_port)/* inet_ntoa(SenderAddr.sin_addr)*/);
-		//for (int i = 0; i < iResult/*sizeof(RecvBuf)/ */; i++){
-		//	printf("%c", RecvBuf[i]);
-		//}
-		printf("MESSAGE:\n%s\n", RecvBuf);
+		printf("From: %s:%d\n", inet_ntoa(SenderAddr.sin_addr), ntohs(SenderAddr.sin_port));
+		printf("FromClient:%s\n", RecvBuf);
+		printf("ToClient:%s\n", RecvBuf);
 		wprintf(L"------------------------------------------------------\n");
 		//---------------------------------------------
 		// Send a datagram to the receiver back
@@ -87,7 +89,6 @@ int main(int argc, char *argv[])
 			return 1;
 		}
 	}
-
 	//-----------------------------------------------
 	// Close the socket when finished receiving datagrams
 	wprintf(L"Finished receiving. Closing socket.\n");
