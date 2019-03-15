@@ -59,10 +59,16 @@ int main(int argc, char *argv[])
 		wprintf(L"bind failed with error %d\n", WSAGetLastError());
 		return 1;
 	}
+
+
 	//-----------------------------------------------
 	wprintf(L"Receiving datagrams...\n");
+	SOCKET new_socket = INVALID_SOCKET;
+
 	while (true)
 	{
+		getpeername(RecvSocket, (SOCKADDR *)&SenderAddr, &SenderAddrSize);
+
 		// Call the recvfrom function to receive datagrams
 		// on the bound socket.
 		iResult = recvfrom(RecvSocket,
