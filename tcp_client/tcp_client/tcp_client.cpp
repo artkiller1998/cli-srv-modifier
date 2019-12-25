@@ -57,7 +57,7 @@ void sendThread(SOCKET ConnectSocket, char *sendbuf, int iResult, char *nickname
 	}
 }
 
-int __cdecl main(int argc, char **argv)
+int main(int argc, char **argv)
 {
 	WSADATA wsaData;
 	SOCKET ConnectSocket = INVALID_SOCKET;
@@ -184,7 +184,7 @@ int __cdecl main(int argc, char **argv)
 	strcat(msg, sendbuf);
 	iResult = send(ConnectSocket, msg, (int)strlen(msg), 0);
 	printf("TS %s\n", msg);
-	//Два потока для получения и отправки. Глобальный флаг завершает поток приема при прерывании пользователем.Join ждет завершения потока
+	//Два потока для получения и отправки. лобальный флаг завершает поток приема при прерывании пользователем.Join ждет завершения потока
 	std::thread recv_t(recvThread, ConnectSocket, recvbuf, recvbuflen, iResult);
 	std::thread send_t(sendThread, ConnectSocket, sendbuf, iResult, nickname);
 	

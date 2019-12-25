@@ -10,7 +10,6 @@
 #include <stdlib.h> // EXIT FAILURE
 #include <stdio.h> // gets, perror
 #include "fstream" // read file
-//#include "iostream" // input output
 
 #pragma comment (lib, "Ws2_32.lib") // Need to link with Ws2_32.lib
 
@@ -25,17 +24,14 @@ int main(int argc, char *argv[])
 	int iResult; //result WS operations
 
 	SOCKET ListenSocket = INVALID_SOCKET;
-	//SOCKET ClientSocket = INVALID_SOCKET;
 
 	struct addrinfo *result = NULL; //contains response(ответ) information about the host
 	struct addrinfo hints;			//hints about the type of socket the caller 
 
 	char Port[50] = ""; //receiver port number
-	//int iSendResult;
 	const int BufferSize = 512;
 	char recvbuf[BufferSize] = ""; //recv
-	int recvbuflen = BufferSize;
-	//char buffer[1025];  //data buffer of 1K  
+	int recvbuflen = BufferSize; 
 
 	sockaddr_in SenderAddr; //who connected
 	int SenderAddrSize = sizeof (SenderAddr);
@@ -108,7 +104,6 @@ int main(int argc, char *argv[])
 
 	printf("Waiting for incoming connections.\n");
 
-	//int res;
 	fd_set read_s; // Множество фд готовых к чтению
 	fd_set write_s; // Множество... записи
 	fd_set error_s; // Множество... исключит ситуац
@@ -195,10 +190,10 @@ int main(int argc, char *argv[])
 				//Check if it was for closing , and also read the  
 				//incoming message  
 				std::fill_n(recvbuf, 512, 0);
-				if ((valread = recv(sd, recvbuf, recvbuflen, 0)) == 0)
+				if ((valread = recv(sd, recvbuf, recvbuflen, 0)) == 0 || (valread == -1))
 				{
 					//Somebody disconnected , get his details and print  
-					getpeername(sd, (struct sockaddr*)&senderaddr,(int *)&senderaddrsize);
+					int iResult = getpeername(sd, (struct sockaddr*)&senderaddr,(int *)&senderaddrsize);
 					printf("Host disconnected , ip %s , port %d \n",
 						inet_ntoa(senderaddr.sin_addr), ntohs(senderaddr.sin_port));
 

@@ -6,10 +6,34 @@
 #include <mutex>
 #include <ctime>
 #include <queue>
+//#include <winsock2.h>
+//#include <ws2tcpip.h>
 #include <set>
-//#include <fstream>
+#include "fstream"
 
-#define TIMEOUT_SW_TABLE 2
+#define TIMEOUT_SW_TABLE 4
+
+//**********************************************************
+// STRUCTURES
+//**********************************************************
+
+/* 4 bytes IP address  Структура обохначает 4-ех байтовый формат адреса*/	
+typedef struct ip_address{
+	u_char byte1;
+	u_char byte2;
+	u_char byte3;
+	u_char byte4;
+
+	bool  operator==(const ip_address &o)const;
+}ip_address;
+
+typedef struct tcp_pseudoheader{
+	struct ip_address srcAddr;
+	struct ip_address destAddr;
+	uint8_t zeroes;
+	uint8_t protocol;
+	uint16_t len;
+}tcp_pseudoheader;
 
 struct tcp_header{  // 20 bytes : default
 	u_short sport;      //Source port
@@ -23,6 +47,11 @@ struct tcp_header{  // 20 bytes : default
 	u_short uptr;
 };
 
+typedef struct {
+	uint8_t kind;
+	uint8_t size;
+} tcp_option_t;
+
 typedef struct mac_address{
 	u_char byte1;
 	u_char byte2;
@@ -34,17 +63,6 @@ typedef struct mac_address{
 	bool  operator==(const mac_address &o)const;
 	bool  operator<(const mac_address &o)const;
 }mac_address;
-
-/* 4 bytes IP address  Структура обохначает 4-ех байтовый формат адреса*/		//зачем TYPEDEF?
-typedef struct ip_address{
-	u_char byte1;
-	u_char byte2;
-	u_char byte3;
-	u_char byte4;
-
-	bool  operator==(const ip_address &o)const;
-}ip_address;
-
 
 typedef struct arp_header{
 	u_short htype; //Hardware type(HTYPE)Каждый канальный протокол передачи данных имеет свой номер, который хранится в этом поле.Например, Ethernet имеет номер 0x0001.
@@ -87,12 +105,68 @@ typedef struct mac_header{
 	u_int etype; //EtherType - help to recognize Arp or Ip header.
 }mac_header;
 
+
+//*****************************************************************
+// FUNCTION: in_cksum
+// Calculates the TCP Checksum 
+// This produces the same checksum as csum, but the checksum is
+// still reported as incorrect by Ethereal, and it also differs from
+// the CRC of the corresponding packet of the input ethereal/tcpdump file
+//*****************************************************************
+u_short in_cksum(u_short *addr, int len)
+{
+	register int nleft = len;
+	register u_short *w = addr;
+	register int sum = 0;
+	u_short answer = 0;
+	while (nleft > 1)
+	{
+		sum += *w++;
+		nleft -= 2;
+	}
+	if (nleft == 1)
+	{
+		*(u_char *)(&answer) = *(u_char *)w;
+		sum += answer;
+	}
+	sum = (sum >> 16) + (sum & 0xffff);
+	sum += (sum >> 16);
+	answer = ~sum; return(answer);
+}
+
+u_short crc(u_short *addr, int count)
+{
+	/* Расчет контрольной суммы Internet для count байтов,
+	* начиная с addr.
+	*/
+	register long sum = 0;
+	u_short checksum = 0;
+
+	while (count > 1)  {
+		/*  Внутренний цикл */
+		sum += * addr++;
+		count -= 2;
+	}
+
+	/*  Прибавляем байт переноса, если он есть */
+	if (count > 0)
+		sum += *(unsigned char *)addr;
+
+	/*  поместим 32-битовую сумму в 16 битов */
+	while (sum >> 16)
+		sum = (sum & 0xffff) + (sum >> 16);
+
+	checksum = ~sum;
+	return checksum;
+}
+
 std::atomic_bool flag_exit = ATOMIC_VAR_INIT(false);
 bool flag_send = true;
 bool disallow_b_d = false;
 bool disallow_except_b_c = false;
 bool start_pcap_disallow = false;
 bool start_pcap_allow = false;
+bool modify_a_c = false;
 
 char fname_disallowed[30] = "disallowed_tempfile.pcap";
 char fname_allowed[30] = "allowed_tempfile.pcap";
@@ -108,13 +182,30 @@ pcap_t *iface2;
 pcap_dumper_t *dfile_allow;
 pcap_dumper_t *dfile_disallow;
 
-//std::ofstream fout_allowed;
-//std::ofstream fout_disallowed;
-
+ip_address zero_ip;
 ip_address a_ip;
 ip_address b_ip;
 ip_address c_ip;
 ip_address d_ip;
+u_short a_port;
+u_short b_port;
+u_short c_port;
+u_short d_port;
+mac_address mac_a;
+
+struct sockaddr_in a_addr;
+struct in_addr b_addr;
+struct in_addr c_addr;
+struct in_addr d_addr;
+
+char _a_ip[20] = "";
+char _b_ip[20] = "";
+char _c_ip[20] = "";
+char _d_ip[20] = "";
+char _a_port[10] = "";
+char _b_port[10] = "";
+char _c_port[10] = "";
+char _d_port[10] = "";
 
 void print_sw_table(){
 	for (it = sw_table.begin(); it != sw_table.end(); it++) {
@@ -269,7 +360,7 @@ void iface2_thr(pcap_if_t *d, pcap_t *adhandle, u_int netmask, struct bpf_progra
 		fprintf(stderr, "\nError opening output file\n");
 	}
 	/* start the capture начинаем слушать
-	луп pcap_loop () похож на pcap_dispatch (), за исключением того,
+	pcap_loop () похож на pcap_dispatch (), за исключением того,
 	что он продолжает считывать пакеты до тех пор, пока не будут обработаны пакеты cnt или возникнет ошибка*/
 	pcap_loop(adhandle, 0, packet_handler, (u_char *)"2");
 }
@@ -289,6 +380,49 @@ void counter_remover()
 
 int main()
 {
+	zero_ip.byte1 = 0;
+	zero_ip.byte2 = 0;
+	zero_ip.byte3 = 0;
+	zero_ip.byte4 = 0;
+
+	std::fstream file("sw_modifier.cfg");
+	if (file.is_open() && file.peek() != EOF) {
+		printf("sw_modifier.cfg --- is opened\n\n"); // если открылс¤
+		file >> _a_ip;
+		file >> _a_port;
+		file >> _b_ip;
+		file >> _b_port; 
+		file >> _c_ip;
+		file >> _c_port;
+		file >> _d_ip;
+		file >> _d_port;
+	}
+	else {
+		printf("sw_modifier.cfg --- is empty or can`t be opened!\n"); // если первый символ конец файла
+	}
+	file.close();
+
+	sscanf_s(_a_ip, "%d.%d.%d.%d", &a_ip.byte1, &a_ip.byte2, &a_ip.byte3, &a_ip.byte4);
+	sscanf_s(_b_ip, "%d.%d.%d.%d", &b_ip.byte1, &b_ip.byte2, &b_ip.byte3, &b_ip.byte4);
+	sscanf_s(_c_ip, "%d.%d.%d.%d", &c_ip.byte1, &c_ip.byte2, &c_ip.byte3, &c_ip.byte4);
+	sscanf_s(_d_ip, "%d.%d.%d.%d", &d_ip.byte1, &d_ip.byte2, &d_ip.byte3, &d_ip.byte4);
+	a_port = htons(atoi(_a_port));
+	b_port = htons(atoi(_b_port));
+	c_port = htons(atoi(_c_port));
+	d_port = htons(atoi(_d_port));
+
+	printf("\nA IP %d.%d.%d.%d\n", a_ip.byte1, a_ip.byte2, a_ip.byte3, a_ip.byte4);
+	printf("B IP %d.%d.%d.%d\n", b_ip.byte1, b_ip.byte2, b_ip.byte3, b_ip.byte4);
+	printf("C IP %d.%d.%d.%d\n", c_ip.byte1, c_ip.byte2, c_ip.byte3, c_ip.byte4);
+	printf("D IP %d.%d.%d.%d\n", d_ip.byte1, d_ip.byte2, d_ip.byte3, d_ip.byte4);
+
+	printf("A PORT %d\n", ntohs(a_port));
+	printf("B PORT %d\n", ntohs(b_port));
+	printf("C PORT %d\n", ntohs(c_port));
+	printf("D PORT %d\n", ntohs(d_port));
+
+	system("PAUSE");
+
 	pcap_if_t *alldevs; //элемент в списке интерфейсов
 	pcap_if_t *d;
 	char ch = 'a';
@@ -322,27 +456,15 @@ int main()
 		return -1;
 	}
 
-	//set IP addresses
-	// A 192.168.33.13
-	a_ip.byte1 = 192;
-	a_ip.byte2 = 168;
-	a_ip.byte3 = 33;
-	a_ip.byte4 = 13;
-	// B 192.168.33.26
-	b_ip.byte1 = 192;
-	b_ip.byte2 = 168;
-	b_ip.byte3 = 33;
-	b_ip.byte4 = 26;
-	// C 192.168.33.39
-	c_ip.byte1 = 192;
-	c_ip.byte2 = 168;
-	c_ip.byte3 = 33;
-	c_ip.byte4 = 39;
-	// D 192.168.33.52
-	d_ip.byte1 = 192;
-	d_ip.byte2 = 168;
-	d_ip.byte3 = 33;
-	d_ip.byte4 = 52;
+	////set MAC addresses
+	//A MAC 00:0C:29:25:8B:CA
+	
+	mac_a.byte1 = 0x00;
+	mac_a.byte2 = 0x0C;
+	mac_a.byte3 = 0x29;
+	mac_a.byte4 = 0x25;
+	mac_a.byte5 = 0x8B;
+	mac_a.byte6 = 0xCA;
 
 	char fname_disallowed[30] = "";
 	char fname_allowed[30] = "";
@@ -367,8 +489,12 @@ int main()
 		switch (ch)
 		{
 		case '1':
+		{
+			modify_a_c = modify_a_c ? false : true;
+			printf("\nModifying trafficfrom from 'A -> C' to 'B -> C' now is: %s\n", modify_a_c ? "Enable" : "Disable");
 			system("PAUSE");
 			break;
+		}
 		case '2':
 			disallow_b_d = disallow_b_d ? false : true;
 			printf("Blocking PING transmission from B to D now is: %s\n", disallow_b_d ? "Enable" : "Disable");
@@ -407,135 +533,105 @@ int main()
 			flag_exit = ATOMIC_VAR_INIT(true);
 			continue;
 		default:
+			printf("Wrong choise\n");
 			break;
 		}
 		ch = getchar();
 	}
-	
 	thr_1.detach();
 	thr_2.detach();
 	thr_3.detach();
 	pcap_freealldevs(alldevs);
-
 	pcap_dump_close(dfile_allow);
 	pcap_dump_close(dfile_disallow);
 	rename("disallowed_tempfile.pcap", fname_disallowed);
 	rename("allowed_tempfile.pcap", fname_allowed);
-
-	
 	return 0;
 }
 
 /* Callback function invoked by libpcap for every incoming packet    Функция обратного вызова вызывается в libpcap для каждого входящего пакета*/
 void packet_handler(u_char *param, const struct pcap_pkthdr *header, const u_char *pkt_data) //unsigned, Каждый пакет в файле дампа добавляется к этому универсальному заголовку. 																					
 {
+	lock_mutex.lock();
 	if (flag_exit)
 	{
 		return;
 	}
 	//Это решает проблему различных заголовков для различных интерфейсов пакета.
-	struct tm ltime;	//?
+	struct tm ltime;	
 	char timestr[16];	//массив на 16 символов
 	ip_header *ih;		//элемент структуры Заголовок IP
 	mac_header *mh;
 	udp_header *uh;		////элемент структуры Заголовок UDP
 	arp_header *ah;
 	tcp_header *th;		////элемент структуры Заголовок TCP
+	char *data = "";
+	int datalen = 0;
 	u_int ip_len;		//unsigned Длина ip
 	u_int udp_len;
 	u_short udp_sport, udp_dport; //unsigned UDP source port,destination port
 	u_short tcp_sport, tcp_dport;
 	time_t local_tv_sec; //метка времени
-
-	lock_mutex.lock();
-
-	(VOID)(param);
-
-	/* convert the timestamp to readable format  преобразует временную метку в привычный формат %H:%M:%S*/
-	local_tv_sec = header->ts.tv_sec;			//берем метку из универсального заголовка
-	localtime_s(&ltime, &local_tv_sec);
-	strftime(timestr, sizeof timestr, "%H:%M:%S", &ltime);	//перед время в функцию
-
-	/* print timestamp and length of the packet  Вывести метку времени и длину пакета*/
-
-
 	mh = (mac_header *)(pkt_data);
-	/* retireve the position of the ip header */		//Смещаем указатель заголовка на 14 символов(длина заголовка MAC) IP-Заголовок расположен сразу после заголовка MAC.
 	ih = (ip_header *)(pkt_data +						//Мы извлекем IP-адрес источника и адрес назначения из IP-заголовка.
 		14); //length of ethernet header
-	ah = (arp_header *)(pkt_data +
-		14);
-
-	/* retireve the position of the udp header */		//берем UDP Header
 	ip_len = (ih->ver_ihl & 0xf) * 4;					//Достижение заголовка UDP немного сложнее, потому что Заголовок IP не имеет фиксированной длины.
 	uh = (udp_header *)((u_char*)ih + ip_len);			//Поэтому мы используем поле длины заголовка IP, чтобы узнать его размер.
 	th = (tcp_header *)((u_char*)ih + ip_len);
-
-	//Как только мы узнаем расположение заголовка UDP, мы извлекаем порты источника и назначения.
-
-	/* convert from network byte order to host byte order Преобразование big-endian в сетевой*/
-	udp_len = ntohs(uh->len);
-	udp_sport = ntohs(uh->sport); //конвертирует 16-битную беззнаковую величину из локального порядка байтов в сетевой
-	udp_dport = ntohs(uh->dport);
 	tcp_sport = ntohs(th->sport);
 	tcp_dport = ntohs(th->dport);
-
-	/* print ip addresses and udp ports выводится 4 байта IP адрес источника, затем UDP источника(Кому?). 4 байта и UDP отправителя(От кого?)*/
-
-	printf("\n\n-------------BEGIN--------------------------------------------------------------");
-	printf("Time of receiving packet: %s. Time stamp:%.6d \n", timestr, header->ts.tv_usec);
-
-	printf("\nProtocol type: Ethernet\n");
-	printf("SMAC:%02X:%02X:%02X:%02X:%02X:%02X -> DMAC:%02X:%02X:%02X:%02X:%02X:%02X\n",
-		mh->smac.byte1,
-		mh->smac.byte2,
-		mh->smac.byte3,
-		mh->smac.byte4,
-		mh->smac.byte5,
-		mh->smac.byte6,
-
-		mh->dmac.byte1,
-		mh->dmac.byte2,
-		mh->dmac.byte3,
-		mh->dmac.byte4,
-		mh->dmac.byte5,
-		mh->dmac.byte6);
-	printf("Length: %d\nEthertype 0X%X\n\n", header->len, ntohs(mh->etype));
 
 	switch (ntohs(mh->etype))
 	{
 	case(0X800) :
 	{
-		printf("\nProtocol type: IP \n");
-		printf("SIP:%d.%d.%d.%d -> DIP:%d.%d.%d.%d\n",
-			ih->saddr.byte1,
-			ih->saddr.byte2,
-			ih->saddr.byte3,
-			ih->saddr.byte4,
-
-			ih->daddr.byte1,
-			ih->daddr.byte2,
-			ih->daddr.byte3,
-			ih->daddr.byte4);
-
-		printf("Length: %d\n", ip_len);
-
-		if (ih->proto == 1)
-		{ //Запрет передачи ICMP-запросов c узла B на узел D.
-			printf("\nProtocol type: ICMP\n");
+		if (ih->proto == 1) { //Запрет передачи ICMP-запросов c узла B на узел D.
 			if (ih->saddr == b_ip && ih->daddr == d_ip && disallow_b_d) {
-				printf("\nFiltering\n");
 				flag_send = false;
-				//mh->dmac = mh->smac;
 			}
-
 		}
 		else if (ih->proto == 6)
 		{
-			printf("\nProtocol type: TCP\n");
-			printf("SP:%d -> DP:%d\n",
-				udp_sport,
-				udp_dport);
+			if (modify_a_c && (ih->saddr == a_ip && ih->daddr == c_ip || (ih->saddr == c_ip && ih->daddr == b_ip))) //Подмена по IP-адресу ///!!!!b_ip
+			{	//и номеру порта TCP-сервера узла A на узел B 
+				//ПЕРЕСЧЕТ IP
+
+				if (ih->saddr == a_ip && ih->daddr == c_ip) {
+					ih->saddr = b_ip;
+					th->sport = b_port;
+				}
+
+				if (ih->saddr == c_ip && ih->daddr == b_ip) {  
+					ih->daddr = a_ip;
+					mh->dmac = mac_a;
+					th->dport = a_port;
+				}
+			
+				ih->crc = 0;
+				char ipBuf[4096];
+				memcpy(ipBuf, ih, 20);
+				char saddr[30] = "";
+				char daddr[30] = "";
+				sprintf(saddr, "%d.%d.%d.%d", ih->saddr.byte1, ih->saddr.byte2, ih->saddr.byte3, ih->saddr.byte4);
+				sprintf(daddr, "%d.%d.%d.%d", ih->daddr.byte1, ih->daddr.byte2, ih->daddr.byte3, ih->daddr.byte4);
+				ih->crc = crc((u_short *)ipBuf, 20);
+				//ПЕРЕСЧЕТ TCP
+				th->checksum = 0;
+				tcp_pseudoheader psd_header; //создаем псевдозаголовок и заполняем его
+				psd_header.destAddr = ih->daddr;
+				psd_header.srcAddr = ih->saddr;
+				psd_header.zeroes = 0;
+				psd_header.protocol = IPPROTO_TCP;
+				data = (char *)((u_char*)ih + ip_len + 20); //считываем данные
+				datalen = htons(ih->len) - 40;
+				psd_header.len = htons(sizeof(tcp_header)+datalen); //задаем длину псевдохедера
+
+				char tcpBuf[65536];	//буфер передаваемый в cksum
+				memcpy(tcpBuf, &psd_header, sizeof(tcp_pseudoheader));
+				memcpy(tcpBuf + sizeof(tcp_pseudoheader),th, sizeof(tcp_header));
+				memcpy(tcpBuf + sizeof(tcp_pseudoheader)+sizeof(tcp_header), data, datalen);
+				th->checksum = in_cksum((u_short *)tcpBuf, sizeof(tcp_pseudoheader)+sizeof(tcp_header)+datalen);
+			}
 			if (disallow_except_b_c) { //Разрешение передачи сообщений по протоколу TCP только между узлами B и C.
 				flag_send = false;
 				if ( (ih->saddr == b_ip && ih->daddr == c_ip) ||
@@ -543,35 +639,7 @@ void packet_handler(u_char *param, const struct pcap_pkthdr *header, const u_cha
 					flag_send = true;
 				}
 			}
-			printf("Length: %d\n\n\n\n", th->offset);
-			printf("Checksum: %X\n\n\n\n", ntohs(th->checksum));
 		}
-		else if (ih->proto == 17)
-		{
-			printf("\nProtocol type: UDP\n");
-			printf("SP:%d -> DP:%d\n",
-				tcp_sport,
-				tcp_dport);
-			printf("Length: %d\n\n\n\n", udp_len);
-		}
-
-		break;
-	}
-	case(0X806) :
-	{
-		printf("\nProtocol type: ARP - %s", ntohs(ah->oper) == 0x0001 ? "REQEST\n" : "ANSWER\n");
-		printf("SIP:%d.%d.%d.%d -> DIP:%d.%d.%d.%d\n",
-			ah->saddr.byte1,
-			ah->saddr.byte2,
-			ah->saddr.byte3,
-			ah->saddr.byte4,
-
-			ah->daddr.byte1,
-			ah->daddr.byte2,
-			ah->daddr.byte3,
-			ah->daddr.byte4);
-		printf("Length logic adress(bytes): %d\n", ah->plen);
-		printf("Length hardware adress(bytes): %d\n\n", ah->hlen);
 		break;
 	}
 	default:

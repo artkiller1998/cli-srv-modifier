@@ -1,12 +1,29 @@
-﻿Build started 19.03.2019 23:31:38.
+﻿Build started 01.05.2019 18:36:03.
      1>Project "C:\Users\Denis Rodrigez\documents\visual studio 2013\Projects\sw_modifier\sw_modifier\sw_modifier.vcxproj" on node 2 (Build target(s)).
      1>ClCompile:
-         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\CL.exe /c /I"C:\Program Files (x86)\Microsoft Visual Studio 11.0\VC\include" /I"C:\Program Files (x86)\WinPcap\WpdPack\Include" /ZI /nologo /W3 /WX- /Od /Oy- /D WIN32 /D _DEBUG /D _CONSOLE /D _LIB /D WPCAP /D HAVE_REMOTE /D _USING_V110_SDK71_ /D _UNICODE /D UNICODE /Gm /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Fo"Debug\\" /Fd"Debug\vc120.pdb" /Gd /TP /analyze- /errorReport:prompt sw_modifier.cpp
+         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\CL.exe /c /I"C:\Program Files (x86)\Microsoft Visual Studio 11.0\VC\include" /I"C:\Program Files (x86)\WinPcap\WpdPack\Include" /ZI /nologo /W3 /WX- /Od /Oy- /D WIN32 /D _DEBUG /D _CONSOLE /D _LIB /D WPCAP /D HAVE_REMOTE /D _ALLOW_MSC_VER_MISMATCH /D _USING_V110_SDK71_ /D _UNICODE /D UNICODE /Gm /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Fo"Debug\\" /Fd"Debug\vc120.pdb" /Gd /TP /analyze- /errorReport:prompt sw_modifier.cpp
          sw_modifier.cpp
-     1>c:\users\denis rodrigez\documents\visual studio 2013\projects\sw_modifier\sw_modifier\sw_modifier.cpp(387): warning C4996: 'scanf': This function or variable may be unsafe. Consider using scanf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+     1>c:\users\denis rodrigez\documents\visual studio 2013\projects\sw_modifier\sw_modifier\sw_modifier.cpp(201): warning C4244: '=' : conversion from 'long' to 'u_short', possible loss of data
+     1>c:\program files (x86)\microsoft visual studio 11.0\vc\include\fstream(1306): warning C4250: 'std::basic_fstream<char,std::char_traits<char>>' : inherits 'std::basic_istream<char,std::char_traits<char>>::std::basic_istream<char,std::char_traits<char>>::_Add_vtordisp1' via dominance
+                 c:\program files (x86)\microsoft visual studio 11.0\vc\include\istream(74) : see declaration of 'std::basic_istream<char,std::char_traits<char>>::_Add_vtordisp1'
+                 c:\users\denis rodrigez\documents\visual studio 2013\projects\sw_modifier\sw_modifier\sw_modifier.cpp(445) : see reference to class template instantiation 'std::basic_fstream<char,std::char_traits<char>>' being compiled
+     1>c:\program files (x86)\microsoft visual studio 11.0\vc\include\fstream(1306): warning C4250: 'std::basic_fstream<char,std::char_traits<char>>' : inherits 'std::basic_ostream<char,std::char_traits<char>>::std::basic_ostream<char,std::char_traits<char>>::_Add_vtordisp2' via dominance
+                 c:\program files (x86)\microsoft visual studio 11.0\vc\include\ostream(90) : see declaration of 'std::basic_ostream<char,std::char_traits<char>>::_Add_vtordisp2'
+     1>c:\users\denis rodrigez\documents\visual studio 2013\projects\sw_modifier\sw_modifier\sw_modifier.cpp(611): warning C4996: 'scanf': This function or variable may be unsafe. Consider using scanf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
                  c:\program files (x86)\microsoft visual studio 11.0\vc\include\stdio.h(290) : see declaration of 'scanf'
-     1>c:\users\denis rodrigez\documents\visual studio 2013\projects\sw_modifier\sw_modifier\sw_modifier.cpp(399): warning C4996: 'scanf': This function or variable may be unsafe. Consider using scanf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+     1>c:\users\denis rodrigez\documents\visual studio 2013\projects\sw_modifier\sw_modifier\sw_modifier.cpp(623): warning C4996: 'scanf': This function or variable may be unsafe. Consider using scanf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
                  c:\program files (x86)\microsoft visual studio 11.0\vc\include\stdio.h(290) : see declaration of 'scanf'
+     1>c:\users\denis rodrigez\documents\visual studio 2013\projects\sw_modifier\sw_modifier\sw_modifier.cpp(739): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+                 c:\program files (x86)\microsoft visual studio 11.0\vc\include\stdio.h(357) : see declaration of 'sprintf'
+     1>c:\users\denis rodrigez\documents\visual studio 2013\projects\sw_modifier\sw_modifier\sw_modifier.cpp(740): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+                 c:\program files (x86)\microsoft visual studio 11.0\vc\include\stdio.h(357) : see declaration of 'sprintf'
+     1>c:\users\denis rodrigez\documents\visual studio 2013\projects\sw_modifier\sw_modifier\sw_modifier.cpp(664): warning C4101: 'timestr' : unreferenced local variable
+     1>c:\users\denis rodrigez\documents\visual studio 2013\projects\sw_modifier\sw_modifier\sw_modifier.cpp(677): warning C4101: 'local_tv_sec' : unreferenced local variable
+     1>c:\users\denis rodrigez\documents\visual studio 2013\projects\sw_modifier\sw_modifier\sw_modifier.cpp(675): warning C4101: 'udp_dport' : unreferenced local variable
+     1>c:\users\denis rodrigez\documents\visual studio 2013\projects\sw_modifier\sw_modifier\sw_modifier.cpp(675): warning C4101: 'udp_sport' : unreferenced local variable
+     1>c:\users\denis rodrigez\documents\visual studio 2013\projects\sw_modifier\sw_modifier\sw_modifier.cpp(674): warning C4101: 'udp_len' : unreferenced local variable
+     1>c:\users\denis rodrigez\documents\visual studio 2013\projects\sw_modifier\sw_modifier\sw_modifier.cpp(668): warning C4101: 'ah' : unreferenced local variable
+     1>c:\users\denis rodrigez\documents\visual studio 2013\projects\sw_modifier\sw_modifier\sw_modifier.cpp(663): warning C4101: 'ltime' : unreferenced local variable
        Link:
          C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\link.exe /ERRORREPORT:PROMPT /OUT:"C:\Users\Denis Rodrigez\documents\visual studio 2013\Projects\sw_modifier\Debug\sw_modifier.exe" /INCREMENTAL /NOLOGO /LIBPATH:"C:\Program Files (x86)\WinPcap\WpdPack\Lib" /LIBPATH:"C:\Program Files (x86)\Microsoft Visual Studio 11.0\VC\lib" /LIBPATH:"C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\lib" Packet.lib wpcap.lib ws2_32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:"C:\Users\Denis Rodrigez\documents\visual studio 2013\Projects\sw_modifier\Debug\sw_modifier.pdb" /SUBSYSTEM:CONSOLE,"5.01" /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"C:\Users\Denis Rodrigez\documents\visual studio 2013\Projects\sw_modifier\Debug\sw_modifier.lib" /MACHINE:X86 Debug\stdafx.obj
          Debug\sw_modifier.obj
@@ -15,4 +32,4 @@
 
 Build succeeded.
 
-Time Elapsed 00:00:01.36
+Time Elapsed 00:00:02.83

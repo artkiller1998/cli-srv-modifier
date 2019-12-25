@@ -202,8 +202,8 @@ int main()
 	pcap_t *adhandle; //if not NULL, a pointer to the next element in the list; NULL for the last element of the list
 	char errbuf[PCAP_ERRBUF_SIZE]; //Размер, используемый при выделении буфера, содержащего ошибки 
 	u_int netmask; //unsigned int
-	char packet_filter[] = ""; //?
-	struct bpf_program fcode; //https://xakep.ru/2002/10/07/16494/
+	char packet_filter[] = ""; 
+	struct bpf_program fcode; 
 
 	/* Retrieve the device list  Получение списка устройств */
 	if (pcap_findalldevs_ex(PCAP_SRC_IF_STRING, NULL, &alldevs, errbuf) == -1) //  PCAP_SRC_IF_STRING определяет тип источника
